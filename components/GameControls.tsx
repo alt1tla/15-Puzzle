@@ -8,38 +8,50 @@ type GameControlsProps = {
   onRestart: () => void;
   onMenu: () => void;
   showModeSelector?: boolean;
+  onOpenModeModal?: () => void; // Новый пропс для открытия модального окна
+  onCloseModeModal?: () => void; // Новый пропс для закрытия модального окна
+  showModeModal?: boolean; // Новый пропс для состояния модального окна
 };
 
 const GameControls: React.FC<GameControlsProps> = ({
   onRestart,
   onMenu,
-  showModeSelector = false
+  showModeSelector = false,
+  onOpenModeModal,
+  onCloseModeModal,
+  showModeModal = false
 }) => {
-  const { theme, gameMode, setGameMode, boardSize } = useGameSettings(); // Изменено: difficulty → boardSize
+  const { theme, gameMode, setGameMode, boardSize } = useGameSettings();
   const styles = createStyles(theme);
-  const [showModeModal, setShowModeModal] = useState(false);
+  const [internalShowModeModal, setInternalShowModeModal] = useState(false);
+
+  // Используем переданное состояние или внутреннее состояние
+  const modalVisible = showModeModal !== undefined ? showModeModal : internalShowModeModal;
 
   const handleModeSelect = (selectedMode: GameMode) => {
     setGameMode(selectedMode);
-    setShowModeModal(false);
+    handleCloseModal();
+  };
+
+  const handleOpenModal = () => {
+    if (onOpenModeModal) {
+      onOpenModeModal();
+    } else {
+      setInternalShowModeModal(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (onCloseModeModal) {
+      onCloseModeModal();
+    } else {
+      setInternalShowModeModal(false);
+    }
   };
 
   const getCurrentModeLabel = () => {
     const currentMode = gameModes.find(mode => mode.value === gameMode);
     return currentMode?.label || '🏆 Классика';
-  };
-
-  // Получаем информацию о временном лимите для текущего размера поля
-  const getTimeLimitInfo = () => {
-    if (gameMode === 'time_attack') {
-      const currentBoardSize = boardSizes.find((size: { label: string }) => size.label === boardSize.label); // Добавлен тип
-      if (currentBoardSize) {
-        const minutes = Math.floor(currentBoardSize.timeLimit / 60);
-        const seconds = currentBoardSize.timeLimit % 60;
-        return `Лимит: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-      }
-    }
-    return '';
   };
 
   return (
@@ -55,15 +67,10 @@ const GameControls: React.FC<GameControlsProps> = ({
                 backgroundColor: styles.Colors.secondary
               }
             ]}
-            onPress={() => setShowModeModal(true)}
+            onPress={handleOpenModal}
           >
             <Text style={styles.Typography.button}>{getCurrentModeLabel()}</Text>
           </TouchableOpacity>
-          {getTimeLimitInfo() && (
-            <Text style={[styles.Typography.caption, { marginTop: 5, color: styles.Colors.accent }]}>
-              {getTimeLimitInfo()}
-            </Text>
-          )}
         </View>
       )}
 
@@ -79,10 +86,10 @@ const GameControls: React.FC<GameControlsProps> = ({
 
       {/* Модальное окно выбора режима */}
       <Modal
-        visible={showModeModal}
+        visible={modalVisible}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowModeModal(false)}
+        onRequestClose={handleCloseModal}
       >
         <View style={{
           flex: 1,
@@ -110,11 +117,11 @@ const GameControls: React.FC<GameControlsProps> = ({
                 // Для режима time_attack показываем лимит времени текущего размера поля
                 let timeInfo = '';
                 if (mode.value === 'time_attack') {
-                  const currentBoardSize = boardSizes.find((size: { label: string }) => size.label === boardSize.label); // Добавлен тип
+                  const currentBoardSize = boardSizes.find((size: { label: string }) => size.label === boardSize.label);
                   if (currentBoardSize) {
                     const minutes = Math.floor(currentBoardSize.timeLimit / 60);
                     const seconds = currentBoardSize.timeLimit % 60;
-                    timeInfo = `Лимит: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    timeInfo = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                   }
                 }
 
@@ -183,7 +190,7 @@ const GameControls: React.FC<GameControlsProps> = ({
                 styles.Buttons.outline,
                 { marginTop: 15 }
               ]}
-              onPress={() => setShowModeModal(false)}
+              onPress={handleCloseModal}
             >
               <Text style={[
                 styles.Typography.button,

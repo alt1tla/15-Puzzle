@@ -19,7 +19,7 @@ type Props = {
 };
 
 const GameScreen = ({ navigation, route }: Props) => {
-  const { theme, gameMode, addScore, boardSize, getTimeLimit } = useGameSettings(); // Изменено
+  const { theme, gameMode, addScore, boardSize, getTimeLimit } = useGameSettings();
   const styles = createStyles(theme);
 
   const { tails = 15, rows = 4, columns = 4, testMode = false } = route.params || {};
@@ -35,28 +35,27 @@ const GameScreen = ({ navigation, route }: Props) => {
   const [moves, setMoves] = useState(0);
   const [time, setTime] = useState(0);
   const [isGameActive, setIsGameActive] = useState(false);
+  const [isTimerRunning, setIsTimerRunning] = useState(false); // Новое состояние для отслеживания запуска таймера
+  const [showModeModal, setShowModeModal] = useState(false); // Новое состояние для модального окна
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const timeLimit = getTimeLimit(); // Получаем лимит времени только для time_attack
+  const timeLimit = getTimeLimit();
 
-  // Функция инициализации новой игры
-  const initGame = () => {
-    let initialBoard;
-    if (testMode) {
-      initialBoard = createTestBoard(tails);
-    } else {
-      initialBoard = createInitialBoard(tails);
-      initialBoard = shuffleBoard(initialBoard, rows, columns);
+  // Функция запуска таймера
+  const startTimer = () => {
+    if (!isTimerRunning && gameMode !== 'classic') {
+      setIsTimerRunning(true);
     }
-    setBoard(initialBoard);
-    setMoves(0);
-    setTime(0);
-    setIsGameActive(true);
   };
 
-  // Запуск/остановка таймера в зависимости от режима
+  // Функция остановки таймера
+  const stopTimer = () => {
+    setIsTimerRunning(false);
+  };
+
+  // Запуск/остановка таймера в зависимости от режима и состояния
   useEffect(() => {
-    if (isGameActive && gameMode !== 'classic') {
+    if (isGameActive && isTimerRunning && gameMode !== 'classic' && !showModeModal) {
       timerRef.current = setInterval(() => {
         setTime(prevTime => {
           // Проверка лимита времени только для time_attack
@@ -78,11 +77,12 @@ const GameScreen = ({ navigation, route }: Props) => {
         clearInterval(timerRef.current);
       }
     };
-  }, [isGameActive, gameMode, timeLimit]);
+  }, [isGameActive, isTimerRunning, gameMode, timeLimit, showModeModal]); // Добавлена зависимость showModeModal
 
   // Обработка окончания времени в режиме time_attack
   const handleTimeUp = () => {
     setIsGameActive(false);
+    setIsTimerRunning(false);
     const minutes = Math.floor(timeLimit / 60);
     const seconds = timeLimit % 60;
     Alert.alert(
@@ -95,6 +95,23 @@ const GameScreen = ({ navigation, route }: Props) => {
     );
   };
 
+  // Функция инициализации новой игры
+  const initGame = () => {
+    let initialBoard;
+    if (testMode) {
+      initialBoard = createTestBoard(tails);
+    } else {
+      initialBoard = createInitialBoard(tails);
+      initialBoard = shuffleBoard(initialBoard, rows, columns);
+    }
+    setBoard(initialBoard);
+    setMoves(0);
+    setTime(0);
+    setIsGameActive(true);
+    setIsTimerRunning(false); // Таймер не запускается автоматически
+    setShowModeModal(false); // Закрываем модальное окно при перезапуске
+  };
+
   // Эффект для инициализации игры при изменении параметров
   useEffect(() => {
     initGame();
@@ -104,10 +121,11 @@ const GameScreen = ({ navigation, route }: Props) => {
   useEffect(() => {
     if (board.length > 0 && isSolved(board) && isGameActive) {
       setIsGameActive(false);
+      setIsTimerRunning(false);
       
       // Сохранение результата
       const scoreRecord = {
-        boardSize: boardSize.label, // Изменено
+        boardSize: boardSize.label,
         mode: gameMode,
         score: gameMode === 'classic' ? moves : time,
         moves: moves
@@ -144,6 +162,11 @@ const GameScreen = ({ navigation, route }: Props) => {
   const handleCellPress = (index: number) => {
     if (board[index] === 0 || !isGameActive) return;
 
+    // Запускаем таймер при первом прикосновении
+    if (!isTimerRunning && gameMode !== 'classic') {
+      startTimer();
+    }
+
     const emptyIndex = board.indexOf(0);
     const row = Math.floor(index / columns);
     const column = index % columns;
@@ -159,6 +182,18 @@ const GameScreen = ({ navigation, route }: Props) => {
       setBoard(newBoard);
       setMoves(moves + 1);
     }
+  };
+
+  // Обработчик открытия модального окна выбора режима
+  const handleOpenModeModal = () => {
+    stopTimer(); // Останавливаем таймер при открытии модального окна
+    setShowModeModal(true);
+  };
+
+  // Обработчик закрытия модального окна выбора режима
+  const handleCloseModeModal = () => {
+    setShowModeModal(false);
+    // Таймер не возобновляется автоматически после закрытия модального окна
   };
 
   // Форматирование времени для отображения
@@ -201,6 +236,9 @@ const GameScreen = ({ navigation, route }: Props) => {
         onRestart={initGame}
         onMenu={() => navigation.goBack()}
         showModeSelector={true}
+        onOpenModeModal={handleOpenModeModal} // Передаем обработчик открытия модального окна
+        onCloseModeModal={handleCloseModeModal} // Передаем обработчик закрытия модального окна
+        showModeModal={showModeModal} // Передаем состояние модального окна
       />
     </View>
   );
