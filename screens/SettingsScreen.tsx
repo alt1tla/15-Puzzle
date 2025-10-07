@@ -1,7 +1,7 @@
 // screens/SettingsScreen.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StatusBar, Platform } from 'react-native';
-import { useGameSettings, difficultyLevels } from '../contexts/GameSettingsContext';
+import { useGameSettings, boardSizes } from '../contexts/GameSettingsContext'; // Изменено
 import { createStyles } from '../styles/GlobalStyles';
 
 type Props = {
@@ -9,26 +9,26 @@ type Props = {
 };
 
 const SettingsScreen = ({ navigation }: Props) => {
-  const { difficulty, setDifficulty, theme, setTheme, playerName } = useGameSettings();
+  const { boardSize, setBoardSize, theme, setTheme, playerName } = useGameSettings(); // Изменено
   const styles = createStyles(theme);
 
-  // Находим текущий индекс сложности
-  const currentDifficultyIndex = difficultyLevels.findIndex(
-    level => level.label === difficulty.label
+  // Находим текущий индекс размера поля
+  const currentBoardSizeIndex = boardSizes.findIndex( // Изменено
+    size => size.label === boardSize.label // Изменено
   );
 
-  // Обработчик переключения сложности вперед
-  const handleNextDifficulty = () => {
-    const nextIndex = (currentDifficultyIndex + 1) % difficultyLevels.length;
-    setDifficulty(difficultyLevels[nextIndex]);
+  // Обработчик переключения размера поля вперед
+  const handleNextBoardSize = () => { // Изменено
+    const nextIndex = (currentBoardSizeIndex + 1) % boardSizes.length; // Изменено
+    setBoardSize(boardSizes[nextIndex]); // Изменено
   };
 
-  // Обработчик переключения сложности назад
-  const handlePrevDifficulty = () => {
-    const prevIndex = currentDifficultyIndex === 0
-      ? difficultyLevels.length - 1
-      : currentDifficultyIndex - 1;
-    setDifficulty(difficultyLevels[prevIndex]);
+  // Обработчик переключения размера поля назад
+  const handlePrevBoardSize = () => { // Изменено
+    const prevIndex = currentBoardSizeIndex === 0
+      ? boardSizes.length - 1 // Изменено
+      : currentBoardSizeIndex - 1;
+    setBoardSize(boardSizes[prevIndex]); // Изменено
   };
 
   // Обработчик выбора темы
@@ -36,7 +36,7 @@ const SettingsScreen = ({ navigation }: Props) => {
     setTheme(selectedTheme);
   };
 
-  // Описания тем для отображения (только иконки)
+  // Описания тем для отображения
   const themeOptions = [
     { value: 'light' as const, icon: '🌞', label: 'Светлая' },
     { value: 'dark' as const, icon: '🌙', label: 'Тёмная' },
@@ -48,7 +48,6 @@ const SettingsScreen = ({ navigation }: Props) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: styles.Colors.background }}>
-      {/* Статус-бар */}
       <StatusBar
         barStyle={theme === 'light' ? 'dark-content' : 'light-content'}
         backgroundColor={styles.Colors.background}
@@ -57,15 +56,11 @@ const SettingsScreen = ({ navigation }: Props) => {
       <ScrollView
         style={styles.Containers.screen}
         contentContainerStyle={{
-          paddingTop: statusBarHeight + 20, // Добавляем отступ сверху
+          paddingTop: statusBarHeight + 20,
           paddingBottom: 20
         }}
       >
-
-        {/* Секция выбора темы */}
         <Text style={[styles.Typography.subtitle, { marginBottom: 20 }]}>Выбор темы</Text>
-
-        {/* Контейнер для иконок тем в строку */}
         <View style={{
           flexDirection: 'row',
           justifyContent: 'center',
@@ -114,11 +109,7 @@ const SettingsScreen = ({ navigation }: Props) => {
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* Секция выбора сложности */}
-        <Text style={[styles.Typography.subtitle, { marginBottom: 20 }]}>Настройки сложности</Text>
-
-        {/* Карусель сложности */}
+        <Text style={[styles.Typography.subtitle, { marginBottom: 20 }]}>Настройки размера поля</Text>
         <View style={{
           alignItems: 'center',
           marginBottom: 40,
@@ -131,8 +122,6 @@ const SettingsScreen = ({ navigation }: Props) => {
           shadowOpacity: 0.1,
           shadowRadius: 4,
         }}>
-
-          {/* Отображение текущей сложности */}
           <Text style={[
             styles.Typography.heading,
             {
@@ -142,10 +131,8 @@ const SettingsScreen = ({ navigation }: Props) => {
               fontWeight: 'bold'
             }
           ]}>
-            {difficulty.label}
+            {boardSize.label}
           </Text>
-
-          {/* Информация о размере поля */}
           <Text style={[
             styles.Typography.body,
             {
@@ -153,17 +140,13 @@ const SettingsScreen = ({ navigation }: Props) => {
               color: styles.Colors.textSecondary
             }
           ]}>
-            Поле {difficulty.rows} × {difficulty.columns}
+            Поле {boardSize.rows} × {boardSize.columns}
           </Text>
-
-          {/* Кнопки навигации */}
           <View style={{
             flexDirection: 'row',
             alignItems: 'center',
             gap: 30
           }}>
-
-            {/* Кнопка назад */}
             <TouchableOpacity
               style={{
                 width: 50,
@@ -174,7 +157,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                 alignItems: 'center',
                 elevation: 3,
               }}
-              onPress={handlePrevDifficulty}
+              onPress={handlePrevBoardSize}
             >
               <Text style={{
                 fontSize: 20,
@@ -184,29 +167,26 @@ const SettingsScreen = ({ navigation }: Props) => {
                 ←
               </Text>
             </TouchableOpacity>
-
-            {/* Индикатор прогресса */}
             <View style={{ alignItems: 'center' }}>
               <Text style={[
                 styles.Typography.caption,
                 { color: styles.Colors.textSecondary }
               ]}>
-                {currentDifficultyIndex + 1} / {difficultyLevels.length}
+                {currentBoardSizeIndex + 1} / {boardSizes.length}
               </Text>
-              {/* Точечный индикатор */}
               <View style={{
                 flexDirection: 'row',
                 gap: 5,
                 marginTop: 5
               }}>
-                {difficultyLevels.map((_, index) => (
+                {boardSizes.map((_, index) => (
                   <View
                     key={index}
                     style={{
                       width: 8,
                       height: 8,
                       borderRadius: 4,
-                      backgroundColor: index === currentDifficultyIndex
+                      backgroundColor: index === currentBoardSizeIndex
                         ? styles.Colors.primary
                         : styles.Colors.border,
                     }}
@@ -215,7 +195,6 @@ const SettingsScreen = ({ navigation }: Props) => {
               </View>
             </View>
 
-            {/* Кнопка вперед */}
             <TouchableOpacity
               style={{
                 width: 50,
@@ -226,7 +205,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                 alignItems: 'center',
                 elevation: 3,
               }}
-              onPress={handleNextDifficulty}
+              onPress={handleNextBoardSize}
             >
               <Text style={{
                 fontSize: 20,
@@ -237,8 +216,6 @@ const SettingsScreen = ({ navigation }: Props) => {
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Дополнительная информация о сложности */}
           <View style={{
             marginTop: 20,
             padding: 15,
@@ -254,14 +231,12 @@ const SettingsScreen = ({ navigation }: Props) => {
                 fontStyle: 'italic'
               }
             ]}>
-              {difficulty.testMode
+              {boardSize.testMode
                 ? 'Тестовый режим для отладки'
-                : `Примерное время решения: ${getEstimatedTime(difficulty)}`}
+                : `Примерное время решения: ${getEstimatedTime(boardSize)}`}
             </Text>
           </View>
         </View>
-
-        {/* Кнопка возврата */}
         <TouchableOpacity
           style={[
             styles.Buttons.primary,
@@ -276,15 +251,15 @@ const SettingsScreen = ({ navigation }: Props) => {
 };
 
 // Вспомогательная функция для оценки времени решения
-const getEstimatedTime = (difficulty: any): string => {
+const getEstimatedTime = (boardSize: any): string => { // Изменено
   const times: { [key: string]: string } = {
-    'Легкая (3x3)': '1-2 минуты',
-    'Стандартная (4x4)': '3-5 минут',
-    'Сложная (5x5)': '10-15 минут',
-    'Эксперт (6x6)': '20-30 минут',
-    'Тестовый (3x3)': 'менее минуты'
+    '3x3': '1-2 минуты',
+    '4x4': '3-5 минут',
+    '5x5': '10-15 минут',
+    '6x6': '20-30 минут',
+    'Тестовый 3x3': 'менее минуты'
   };
-  return times[difficulty.label] || 'неизвестно';
+  return times[boardSize.label] || 'неизвестно';
 };
 
 export default SettingsScreen;

@@ -19,7 +19,7 @@ type Props = {
 };
 
 const GameScreen = ({ navigation, route }: Props) => {
-  const { theme, gameMode, addScore, difficulty } = useGameSettings();
+  const { theme, gameMode, addScore, boardSize, getTimeLimit } = useGameSettings(); // Изменено
   const styles = createStyles(theme);
 
   const { tails = 15, rows = 4, columns = 4, testMode = false } = route.params || {};
@@ -37,6 +37,7 @@ const GameScreen = ({ navigation, route }: Props) => {
   const [isGameActive, setIsGameActive] = useState(false);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timeLimit = getTimeLimit(); // Получаем лимит времени только для time_attack
 
   // Функция инициализации новой игры
   const initGame = () => {
@@ -58,9 +59,8 @@ const GameScreen = ({ navigation, route }: Props) => {
     if (isGameActive && gameMode !== 'classic') {
       timerRef.current = setInterval(() => {
         setTime(prevTime => {
-          // Проверка лимита времени для time_attack
-          if (gameMode === 'time_attack') {
-            const timeLimit = 300; // 5 минут в секундах
+          // Проверка лимита времени только для time_attack
+          if (gameMode === 'time_attack' && timeLimit > 0) {
             if (prevTime >= timeLimit) {
               handleTimeUp();
               return timeLimit;
@@ -78,14 +78,16 @@ const GameScreen = ({ navigation, route }: Props) => {
         clearInterval(timerRef.current);
       }
     };
-  }, [isGameActive, gameMode]);
+  }, [isGameActive, gameMode, timeLimit]);
 
   // Обработка окончания времени в режиме time_attack
   const handleTimeUp = () => {
     setIsGameActive(false);
+    const minutes = Math.floor(timeLimit / 60);
+    const seconds = timeLimit % 60;
     Alert.alert(
       'Время вышло!', 
-      `Вы не успели собрать пазл за отведенное время. Сделано ходов: ${moves}`,
+      `Лимит времени (${minutes}:${seconds.toString().padStart(2, '0')}) истек. Сделано ходов: ${moves}`,
       [
         { text: 'Попробовать снова', onPress: initGame },
         { text: 'В меню', onPress: () => navigation.goBack() }
@@ -105,7 +107,7 @@ const GameScreen = ({ navigation, route }: Props) => {
       
       // Сохранение результата
       const scoreRecord = {
-        difficulty: difficulty.label,
+        boardSize: boardSize.label, // Изменено
         mode: gameMode,
         score: gameMode === 'classic' ? moves : time,
         moves: moves
@@ -116,14 +118,19 @@ const GameScreen = ({ navigation, route }: Props) => {
       let message = '';
       if (gameMode === 'classic') {
         message = `Вы собрали головоломку за ${moves} ходов!`;
-      } else if (gameMode === 'timed') {
+      } else {
         const minutes = Math.floor(time / 60);
         const seconds = time % 60;
-        message = `Вы собрали головоломку за ${minutes}:${seconds.toString().padStart(2, '0')} и ${moves} ходов!`;
-      } else if (gameMode === 'time_attack') {
-        const minutes = Math.floor(time / 60);
-        const seconds = time % 60;
-        message = `Вы собрали головоломку за ${minutes}:${seconds.toString().padStart(2, '0')} и ${moves} ходов!`;
+        const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (gameMode === 'timed') {
+          message = `Вы собрали головоломку за ${timeString} и ${moves} ходов!`;
+        } else if (gameMode === 'time_attack') {
+          const timeLeft = timeLimit - time;
+          const minutesLeft = Math.floor(timeLeft / 60);
+          const secondsLeft = timeLeft % 60;
+          message = `Вы собрали головоломку за ${timeString} и ${moves} ходов!\nОсталось времени: ${minutesLeft}:${secondsLeft.toString().padStart(2, '0')}`;
+        }
       }
 
       Alert.alert('Победа!', message, [
@@ -161,6 +168,15 @@ const GameScreen = ({ navigation, route }: Props) => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Расчет оставшегося времени для time_attack
+  const getRemainingTime = () => {
+    if (gameMode === 'time_attack' && timeLimit > 0) {
+      const remaining = timeLimit - time;
+      return formatTime(Math.max(0, remaining));
+    }
+    return formatTime(time);
+  };
+
   return (
     <View style={styles.Containers.centered}>
       <GameHeader 
@@ -169,8 +185,10 @@ const GameScreen = ({ navigation, route }: Props) => {
         columns={columns}
         moves={moves}
         testMode={testMode}
-        time={gameMode !== 'classic' ? formatTime(time) : undefined}
+        time={gameMode !== 'classic' ? getRemainingTime() : undefined}
         gameMode={gameMode}
+        timeLimit={gameMode === 'time_attack' ? timeLimit : undefined}
+        currentTime={time}
       />
       
       <GameBoard 

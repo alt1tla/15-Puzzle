@@ -1,7 +1,7 @@
 // components/GameControls.tsx
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, Modal, ScrollView } from 'react-native';
-import { useGameSettings, gameModes, GameMode } from '../contexts/GameSettingsContext';
+import { useGameSettings, gameModes, GameMode, boardSizes } from '../contexts/GameSettingsContext';
 import { createStyles } from '../styles/GlobalStyles';
 
 type GameControlsProps = {
@@ -10,8 +10,12 @@ type GameControlsProps = {
   showModeSelector?: boolean;
 };
 
-const GameControls: React.FC<GameControlsProps> = ({ onRestart, onMenu, showModeSelector = false }) => {
-  const { theme, gameMode, setGameMode } = useGameSettings();
+const GameControls: React.FC<GameControlsProps> = ({
+  onRestart,
+  onMenu,
+  showModeSelector = false
+}) => {
+  const { theme, gameMode, setGameMode, boardSize } = useGameSettings(); // Изменено: difficulty → boardSize
   const styles = createStyles(theme);
   const [showModeModal, setShowModeModal] = useState(false);
 
@@ -25,21 +29,42 @@ const GameControls: React.FC<GameControlsProps> = ({ onRestart, onMenu, showMode
     return currentMode?.label || '🏆 Классика';
   };
 
+  // Получаем информацию о временном лимите для текущего размера поля
+  const getTimeLimitInfo = () => {
+    if (gameMode === 'time_attack') {
+      const currentBoardSize = boardSizes.find((size: { label: string }) => size.label === boardSize.label); // Добавлен тип
+      if (currentBoardSize) {
+        const minutes = Math.floor(currentBoardSize.timeLimit / 60);
+        const seconds = currentBoardSize.timeLimit % 60;
+        return `Лимит: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+    }
+    return '';
+  };
+
   return (
     <View style={{ alignItems: 'center', gap: 15 }}>
       {/* Селектор режима игры (если включен) */}
       {showModeSelector && (
-        <TouchableOpacity
-          style={[
-            styles.Buttons.primary,
-            {
-              minWidth: 200,
-            }
-          ]}
-          onPress={() => setShowModeModal(true)}
-        >
-          <Text style={styles.Typography.button}>{getCurrentModeLabel()}</Text>
-        </TouchableOpacity>
+        <View style={{ alignItems: 'center' }}>
+          <TouchableOpacity
+            style={[
+              styles.Buttons.primary,
+              {
+                minWidth: 200,
+                backgroundColor: styles.Colors.secondary
+              }
+            ]}
+            onPress={() => setShowModeModal(true)}
+          >
+            <Text style={styles.Typography.button}>{getCurrentModeLabel()}</Text>
+          </TouchableOpacity>
+          {getTimeLimitInfo() && (
+            <Text style={[styles.Typography.caption, { marginTop: 5, color: styles.Colors.accent }]}>
+              {getTimeLimitInfo()}
+            </Text>
+          )}
+        </View>
       )}
 
       {/* Основные кнопки управления */}
@@ -81,62 +106,76 @@ const GameControls: React.FC<GameControlsProps> = ({ onRestart, onMenu, showMode
             </Text>
 
             <ScrollView style={{ maxHeight: 400 }}>
-              {gameModes.map((mode) => (
-                <TouchableOpacity
-                  key={mode.value}
-                  style={[
-                    styles.Containers.card,
-                    {
-                      backgroundColor: gameMode === mode.value
-                        ? styles.Colors.primary
-                        : styles.Colors.surface,
-                      marginVertical: 5,
-                      borderWidth: 2,
-                      borderColor: gameMode === mode.value
-                        ? styles.Colors.primaryDark
-                        : styles.Colors.border
-                    }
-                  ]}
-                  onPress={() => handleModeSelect(mode.value)}
-                >
-                  <Text style={[
-                    styles.Typography.body,
-                    {
-                      fontWeight: 'bold',
-                      color: gameMode === mode.value
-                        ? styles.Colors.textLight
-                        : styles.Colors.textPrimary
-                    }
-                  ]}>
-                    {mode.label}
-                  </Text>
-                  <Text style={[
-                    styles.Typography.caption,
-                    {
-                      marginTop: 5,
-                      color: gameMode === mode.value
-                        ? styles.Colors.textLight
-                        : styles.Colors.textSecondary
-                    }
-                  ]}>
-                    {mode.description}
-                  </Text>
-                  {mode.timeLimit > 0 && (
+              {gameModes.map((mode) => {
+                // Для режима time_attack показываем лимит времени текущего размера поля
+                let timeInfo = '';
+                if (mode.value === 'time_attack') {
+                  const currentBoardSize = boardSizes.find((size: { label: string }) => size.label === boardSize.label); // Добавлен тип
+                  if (currentBoardSize) {
+                    const minutes = Math.floor(currentBoardSize.timeLimit / 60);
+                    const seconds = currentBoardSize.timeLimit % 60;
+                    timeInfo = `Лимит: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                  }
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={mode.value}
+                    style={[
+                      styles.Containers.card,
+                      {
+                        backgroundColor: gameMode === mode.value
+                          ? styles.Colors.primary
+                          : styles.Colors.surface,
+                        marginVertical: 5,
+                        borderWidth: 2,
+                        borderColor: gameMode === mode.value
+                          ? styles.Colors.primaryDark
+                          : styles.Colors.border
+                      }
+                    ]}
+                    onPress={() => handleModeSelect(mode.value)}
+                  >
+                    <Text style={[
+                      styles.Typography.body,
+                      {
+                        fontWeight: 'bold',
+                        color: gameMode === mode.value
+                          ? styles.Colors.textLight
+                          : styles.Colors.textPrimary
+                      }
+                    ]}>
+                      {mode.label}
+                    </Text>
                     <Text style={[
                       styles.Typography.caption,
                       {
-                        marginTop: 2,
-                        fontStyle: 'italic',
+                        marginTop: 5,
                         color: gameMode === mode.value
                           ? styles.Colors.textLight
-                          : styles.Colors.accent
+                          : styles.Colors.textSecondary
                       }
                     ]}>
-                      ⏱️ Лимит: {Math.floor(mode.timeLimit / 60)}:{(mode.timeLimit % 60).toString().padStart(2, '0')}
+                      {mode.description}
                     </Text>
-                  )}
-                </TouchableOpacity>
-              ))}
+                    {timeInfo && (
+                      <Text style={[
+                        styles.Typography.caption,
+                        {
+                          marginTop: 2,
+                          fontStyle: 'italic',
+                          fontWeight: 'bold',
+                          color: gameMode === mode.value
+                            ? styles.Colors.textLight
+                            : styles.Colors.accent
+                        }
+                      ]}>
+                        ⏱️ {timeInfo}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
             <TouchableOpacity

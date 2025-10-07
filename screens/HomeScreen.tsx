@@ -1,7 +1,7 @@
 // screens/HomeScreen.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useGameSettings } from '../contexts/GameSettingsContext';
+import { useGameSettings, gameModes } from '../contexts/GameSettingsContext'; // Добавлен импорт gameModes
 import { createStyles } from '../styles/GlobalStyles';
 
 type Props = {
@@ -14,10 +14,14 @@ const themeOptions = [
   { value: 'retro' as const, icon: '🎮', label: 'Ретро' },
 ];
 
-
 const HomeScreen = ({ navigation }: Props) => {
-  const { difficulty, setDifficulty, theme, setTheme, playerName } = useGameSettings();
+  const { boardSize, theme, playerName, gameMode } = useGameSettings();
   const styles = createStyles(theme);
+
+  const getCurrentModeLabel = () => {
+    const currentMode = gameModes.find(mode => mode.value === gameMode); // Исправлено: gameModes.find вместо gameMode.find
+    return currentMode?.label || '🏆 Классика';
+  };
 
   return (
     <View style={styles.Containers.screen}>
@@ -27,7 +31,7 @@ const HomeScreen = ({ navigation }: Props) => {
         <View style={{ gap: 15, width: 250, marginTop: 50 }}>
           <TouchableOpacity
             style={styles.Buttons.primary}
-            onPress={() => navigation.navigate('Game', difficulty)}
+            onPress={() => navigation.navigate('Game', boardSize)}
           >
             <Text style={styles.Typography.button}>
               Играть
@@ -61,7 +65,7 @@ const HomeScreen = ({ navigation }: Props) => {
             🎨 Тема: {themeOptions.find(t => t.value === theme)?.label}
           </Text>
           <Text style={styles.Typography.caption}>
-            🧩 Сложность: {difficulty.label}
+            🧩 Размер: {boardSize.label}
           </Text>
           <Text style={styles.Typography.caption}>
             👤 Игрок: {playerName}

@@ -12,6 +12,8 @@ type GameHeaderProps = {
   testMode: boolean;
   time?: string;
   gameMode?: string;
+  timeLimit?: number;
+  currentTime?: number;
 };
 
 const GameHeader: React.FC<GameHeaderProps> = ({ 
@@ -21,7 +23,9 @@ const GameHeader: React.FC<GameHeaderProps> = ({
   moves, 
   testMode,
   time,
-  gameMode
+  gameMode,
+  timeLimit,
+  currentTime = 0
 }) => {
   const { theme } = useGameSettings();
   const styles = createStyles(theme);
@@ -33,6 +37,17 @@ const GameHeader: React.FC<GameHeaderProps> = ({
       default: return '🏆 ';
     }
   };
+
+  // Расчет прогресса времени для time_attack
+  const getTimeProgress = () => {
+    if (gameMode === 'time_attack' && timeLimit && timeLimit > 0) {
+      return Math.max(0, ((timeLimit - currentTime) / timeLimit) * 100);
+    }
+    return 100;
+  };
+
+  const progress = getTimeProgress();
+  const isTimeCritical = progress < 25;
 
   return (
     <View style={{ alignItems: 'center', marginBottom: 20 }}>
@@ -47,9 +62,34 @@ const GameHeader: React.FC<GameHeaderProps> = ({
       )}
       <Text style={styles.Typography.body}>Шаги: {moves}</Text>
       {time && (
-        <Text style={[styles.Typography.body, { fontWeight: 'bold', color: styles.Colors.primary }]}>
-          Время: {time}
-        </Text>
+        <View style={{ alignItems: 'center', marginTop: 5 }}>
+          <Text style={[
+            styles.Typography.body, 
+            { 
+              fontWeight: 'bold', 
+              color: isTimeCritical ? styles.Colors.accent : styles.Colors.primary 
+            }
+          ]}>
+            {gameMode === 'time_attack' ? 'Осталось: ' : 'Время: '}{time}
+          </Text>
+          {gameMode === 'time_attack' && timeLimit && (
+            <View style={{
+              width: 150,
+              height: 6,
+              backgroundColor: styles.Colors.border,
+              borderRadius: 3,
+              marginTop: 5,
+              overflow: 'hidden'
+            }}>
+              <View style={{
+                width: `${progress}%`,
+                height: '100%',
+                backgroundColor: isTimeCritical ? styles.Colors.accent : styles.Colors.primary,
+                borderRadius: 3,
+              }} />
+            </View>
+          )}
+        </View>
       )}
     </View>
   );

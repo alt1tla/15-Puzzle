@@ -3,38 +3,35 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Типы для данных приложения
 export interface AppSettings {
-  difficulty: {
+  boardSize: { // Изменено с difficulty на boardSize
     label: string;
     tails: number;
     rows: number;
     columns: number;
     testMode?: boolean;
+    timeLimit: number; // Теперь обязательное поле
   };
   theme: "light" | "dark" | "retro";
   playerName: string;
-  // Новые поля для режимов игры и рейтинга
   gameMode: "classic" | "timed" | "time_attack";
   scores: ScoreRecord[];
 }
 
-// Новый тип: запись в рейтинге
 export interface ScoreRecord {
   playerName: string;
-  difficulty: string;
+  boardSize: string; // Изменено с difficulty на boardSize
   mode: "classic" | "timed" | "time_attack";
-  score: number; // время в секундах для timed/time_attack, ходы для classic
+  score: number;
   date: string;
-  moves?: number; // дополнительные ходы для режимов с временем
+  moves?: number;
 }
 
 // Сервис для работы с локальным хранилищем
 export const StorageService = {
-  // Ключи для хранения данных
   STORAGE_KEYS: {
     SETTINGS: "app_settings",
   },
 
-  // Сохранение настроек приложения
   saveSettings: async (settings: AppSettings): Promise<void> => {
     try {
       await AsyncStorage.setItem(
@@ -48,7 +45,6 @@ export const StorageService = {
     }
   },
 
-  // Загрузка настроек приложения
   loadSettings: async (): Promise<AppSettings | null> => {
     try {
       const settingsJson = await AsyncStorage.getItem(
@@ -58,18 +54,24 @@ export const StorageService = {
         const settings = JSON.parse(settingsJson);
         console.log("Настройки успешно загружены");
 
-        // Обеспечиваем обратную совместимость - если старые настройки без новых полей
+        // Обеспечиваем обратную совместимость
+        const boardSize = settings.boardSize || settings.difficulty || { // Поддержка старых настроек
+          label: "4x4",
+          tails: 15,
+          rows: 4,
+          columns: 4,
+          timeLimit: 300
+        };
+
         return {
-          difficulty: settings.difficulty || {
-            label: "Стандартная (4x4)",
-            tails: 15,
-            rows: 4,
-            columns: 4,
+          boardSize: {
+            ...boardSize,
+            timeLimit: boardSize.timeLimit || 300 // Гарантируем наличие timeLimit
           },
           theme: settings.theme || "light",
           playerName: settings.playerName || "Игрок",
-          gameMode: settings.gameMode || "classic", // Значение по умолчанию
-          scores: settings.scores || [], // Пустой массив по умолчанию
+          gameMode: settings.gameMode || "classic",
+          scores: settings.scores || [],
         };
       }
       console.log("Настройки не найдены, используются значения по умолчанию");
@@ -80,7 +82,6 @@ export const StorageService = {
     }
   },
 
-  // Очистка всех данных
   clearStorage: async (): Promise<void> => {
     try {
       await AsyncStorage.clear();

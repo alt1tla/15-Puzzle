@@ -2,54 +2,87 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { StorageService, AppSettings } from '../services/StorageService';
 
-// Тип для настроек сложности
-export type DifficultySettings = {
+// Тип для настроек размера поля
+export type BoardSizeSettings = {
   tails: number;
   rows: number;
   columns: number;
   label: string;
   testMode?: boolean;
+  timeLimit: number; // Лимит времени для режима time_attack
 };
 
 // Тип для темы приложения
 export type Theme = 'light' | 'dark' | 'retro';
 
-// Новый тип: режимы игры
+// Тип: режимы игры
 export type GameMode = 'classic' | 'timed' | 'time_attack';
 
-// Новый тип: запись в рейтинге
+// Тип: запись в рейтинге
 export interface ScoreRecord {
   playerName: string;
-  difficulty: string;
+  boardSize: string; // Изменено с difficulty на boardSize
   mode: GameMode;
   score: number; // время в секундах для timed/time_attack, ходы для classic
   date: string;
-  moves?: number; // дополнительные ходы для режимов с временем
+  moves?: number;
 }
 
-// Расширенный тип для контекста
+// Тип для контекста
 type GameSettingsContextType = {
-  difficulty: DifficultySettings;
+  boardSize: BoardSizeSettings; // Изменено с difficulty на boardSize
   theme: Theme;
   playerName: string;
-  gameMode: GameMode; // Новое: текущий режим игры
-  scores: ScoreRecord[]; // Новое: локальный рейтинг
-  setDifficulty: (settings: DifficultySettings) => void;
+  gameMode: GameMode;
+  scores: ScoreRecord[];
+  setBoardSize: (settings: BoardSizeSettings) => void; // Изменено
   setTheme: (theme: Theme) => void;
   setPlayerName: (name: string) => void;
-  setGameMode: (mode: GameMode) => void; // Новое: установка режима игры
-  addScore: (record: Omit<ScoreRecord, 'date' | 'playerName'>) => void; // Новое: добавление результата
+  setGameMode: (mode: GameMode) => void;
+  addScore: (record: Omit<ScoreRecord, 'date' | 'playerName'>) => void;
   saveSettings: () => Promise<void>;
   loadSettings: () => Promise<void>;
+  getTimeLimit: () => number;
 };
 
-// Варианты сложности игры
-export const difficultyLevels: DifficultySettings[] = [
-  { label: 'Легкая (3x3)', tails: 8, rows: 3, columns: 3 },
-  { label: 'Стандартная (4x4)', tails: 15, rows: 4, columns: 4 },
-  { label: 'Сложная (5x5)', tails: 24, rows: 5, columns: 5 },
-  { label: 'Эксперт (6x6)', tails: 35, rows: 6, columns: 6 },
-  { label: 'Тестовый (3x3)', tails: 8, rows: 3, columns: 3, testMode: true }
+// Варианты размеров поля с индивидуальными временными лимитами для time_attack
+export const boardSizes: BoardSizeSettings[] = [
+  { 
+    label: '3x3', 
+    tails: 8, 
+    rows: 3, 
+    columns: 3, 
+    timeLimit: 180 // 3 минуты
+  },
+  { 
+    label: '4x4', 
+    tails: 15, 
+    rows: 4, 
+    columns: 4, 
+    timeLimit: 300 // 5 минут
+  },
+  { 
+    label: '5x5', 
+    tails: 24, 
+    rows: 5, 
+    columns: 5, 
+    timeLimit: 600 // 10 минут
+  },
+  { 
+    label: '6x6', 
+    tails: 35, 
+    rows: 6, 
+    columns: 6, 
+    timeLimit: 900 // 15 минут
+  },
+  { 
+    label: 'Тестовый 3x3', 
+    tails: 8, 
+    rows: 3, 
+    columns: 3, 
+    testMode: true, 
+    timeLimit: 30 // 30 секунд для тестирования
+  }
 ];
 
 // Режимы игры
@@ -58,41 +91,62 @@ export const gameModes = [
     value: 'classic' as GameMode,
     label: '🏆 Классика',
     description: 'Собрать за минимальное количество ходов',
-    timeLimit: 0 // Без ограничения времени
   },
   {
     value: 'timed' as GameMode,
     label: '⏱️ С таймером',
     description: 'Собрать как можно быстрее',
-    timeLimit: 0 // Без ограничения, просто показывает время
   },
   {
     value: 'time_attack' as GameMode,
     label: '🚨 На время',
     description: 'Собрать за ограниченное время',
-    timeLimit: 300 // 5 минут ограничение
   },
 ];
 
 // Настройки по умолчанию
 const defaultSettings: AppSettings = {
-  difficulty: difficultyLevels[1], // Стандартная сложность
+  boardSize: boardSizes[1], // 4x4 по умолчанию
   theme: 'light',
   playerName: 'Игрок',
-  gameMode: 'classic', // Новое: режим по умолчанию
-  scores: [], // Новое: пустой рейтинг
+  gameMode: 'classic',
+  scores: [],
 };
 
 // Создаем контекст
 const GameSettingsContext = createContext<GameSettingsContextType | undefined>(undefined);
 
+// Вспомогательная функция для получения BoardSizeSettings с timeLimit
+const getBoardSizeWithTimeLimit = (boardSize: any): BoardSizeSettings => {
+  // Ищем соответствующий размер в boardSizes
+  const foundSize = boardSizes.find(size => size.label === boardSize.label);
+  
+  if (foundSize) {
+    return foundSize;
+  }
+  
+  // Если не нашли, создаем с timeLimit по умолчанию
+  return {
+    ...boardSize,
+    timeLimit: defaultSettings.boardSize.timeLimit
+  };
+};
+
 // Провайдер контекста
 export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [difficulty, setDifficulty] = useState<DifficultySettings>(defaultSettings.difficulty);
+  const [boardSize, setBoardSize] = useState<BoardSizeSettings>(defaultSettings.boardSize);
   const [theme, setTheme] = useState<Theme>(defaultSettings.theme);
   const [playerName, setPlayerName] = useState<string>(defaultSettings.playerName);
-  const [gameMode, setGameMode] = useState<GameMode>(defaultSettings.gameMode); // Новое состояние
-  const [scores, setScores] = useState<ScoreRecord[]>(defaultSettings.scores); // Новое состояние
+  const [gameMode, setGameMode] = useState<GameMode>(defaultSettings.gameMode);
+  const [scores, setScores] = useState<ScoreRecord[]>(defaultSettings.scores);
+
+  // Функция для получения лимита времени (только для time_attack)
+  const getTimeLimit = (): number => {
+    if (gameMode === 'time_attack') {
+      return boardSize.timeLimit;
+    }
+    return 0; // Для classic и timed лимита нет
+  };
 
   // Добавление результата в рейтинг
   const addScore = (record: Omit<ScoreRecord, 'date' | 'playerName'>) => {
@@ -105,22 +159,19 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
     setScores(prevScores => {
       const updatedScores = [...prevScores, newScore]
         .sort((a, b) => {
-          // Для режимов с временем - меньше время лучше
           if (a.mode !== 'classic' && b.mode !== 'classic') {
             return a.score - b.score;
           }
-          // Для классики - меньше ходов лучше
           return a.score - b.score;
         })
-        .slice(0, 50); // Сохраняем только топ-50 результатов
-
+        .slice(0, 50);
       return updatedScores;
     });
   };
 
   // Обертки для set-функций с автоматическим сохранением
-  const setDifficultyAndSave = (newDifficulty: DifficultySettings) => {
-    setDifficulty(newDifficulty);
+  const setBoardSizeAndSave = (newBoardSize: BoardSizeSettings) => {
+    setBoardSize(newBoardSize);
   };
 
   const setThemeAndSave = (newTheme: Theme) => {
@@ -139,7 +190,7 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
   const saveSettings = async () => {
     try {
       const currentSettings: AppSettings = {
-        difficulty,
+        boardSize,
         theme,
         playerName,
         gameMode,
@@ -156,11 +207,20 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const savedSettings = await StorageService.loadSettings();
       if (savedSettings) {
-        setDifficulty(savedSettings.difficulty);
-        setTheme(savedSettings.theme);
-        setPlayerName(savedSettings.playerName);
-        setGameMode(savedSettings.gameMode || 'classic');
-        setScores(savedSettings.scores || []);
+        // Обрабатываем boardSize с обеспечением наличия timeLimit
+        let loadedBoardSize: BoardSizeSettings;
+        
+        if (savedSettings.boardSize) {
+          loadedBoardSize = getBoardSizeWithTimeLimit(savedSettings.boardSize);
+        } else {
+          loadedBoardSize = defaultSettings.boardSize;
+        }
+
+        setBoardSize(loadedBoardSize);
+        setTheme(savedSettings.theme || defaultSettings.theme);
+        setPlayerName(savedSettings.playerName || defaultSettings.playerName);
+        setGameMode(savedSettings.gameMode || defaultSettings.gameMode);
+        setScores(savedSettings.scores || defaultSettings.scores);
       }
     } catch (error) {
       console.error('Ошибка загрузки настроек:', error);
@@ -170,7 +230,7 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
   // Автоматическое сохранение при изменении настроек
   useEffect(() => {
     saveSettings();
-  }, [difficulty, theme, playerName, gameMode, scores]);
+  }, [boardSize, theme, playerName, gameMode, scores]);
 
   // Загружаем настройки при первом рендере
   useEffect(() => {
@@ -179,18 +239,19 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <GameSettingsContext.Provider value={{
-      difficulty,
+      boardSize, // Изменено
       theme,
       playerName,
       gameMode,
       scores,
-      setDifficulty: setDifficultyAndSave,
+      setBoardSize: setBoardSizeAndSave, // Изменено
       setTheme: setThemeAndSave,
       setPlayerName: setPlayerNameAndSave,
       setGameMode: setGameModeAndSave,
       addScore,
       saveSettings,
       loadSettings,
+      getTimeLimit,
     }}>
       {children}
     </GameSettingsContext.Provider>
