@@ -1,63 +1,75 @@
 // screens/HomeScreen.tsx
 import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useGameSettings } from '../contexts/GameSettingsContext';
+import { createStyles } from '../styles/GlobalStyles';
 
-// Определяем тип для свойств компонента (пропсов)
 type Props = {
-  navigation: any; // Объект навигации для перехода между экранами
+  navigation: any;
 };
 
-// Главный экран приложения - меню
+const themeOptions = [
+  { value: 'light' as const, icon: '🌞', label: 'Светлая' },
+  { value: 'dark' as const, icon: '🌙', label: 'Тёмная' },
+  { value: 'retro' as const, icon: '🎮', label: 'Ретро' },
+];
+
+
 const HomeScreen = ({ navigation }: Props) => {
+  const { difficulty, setDifficulty, theme, setTheme, playerName } = useGameSettings();
+  const styles = createStyles(theme);
+
   return (
-    <View style={styles.container}>
-      {/* Заголовок игры */}
-      <Text style={styles.title}>15 Puzzle</Text>
+    <View style={styles.Containers.screen}>
+      <View style={styles.Containers.centered}>
+        <Text style={styles.Typography.title}>15 Puzzle</Text>
 
-      {/* Контейнер с кнопками меню */}
-      <View style={styles.buttonContainer}>
-        {/* Кнопка перехода к экрану игры */}
-        <Button
-          title="Играть"
-          onPress={() => navigation.navigate('Game')} // Переход на экран игры
-        />
+        <View style={{ gap: 15, width: 250, marginTop: 50 }}>
+          <TouchableOpacity
+            style={styles.Buttons.primary}
+            onPress={() => navigation.navigate('Game', difficulty)}
+          >
+            <Text style={styles.Typography.button}>
+              Играть
+            </Text>
+          </TouchableOpacity>
 
-        {/* Кнопка перехода к таблице рекордов */}
-        <Button
-          title="Рейтинг"
-          onPress={() => navigation.navigate('Leaderboard')} // Переход на экран рейтинга
-        />
+          <TouchableOpacity
+            style={styles.Buttons.primary}
+            onPress={() => navigation.navigate('Leaderboard')}
+          >
+            <Text style={styles.Typography.button}>Рейтинг</Text>
+          </TouchableOpacity>
 
-        {/* Кнопка перехода к настройкам */}
-        <Button
-          title="Настройки"
-          onPress={() => navigation.navigate('Settings')} // Переход на экран настроек
-        />
+          <TouchableOpacity
+            style={styles.Buttons.primary}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Text style={styles.Typography.button}>Настройки</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={[
+        styles.Containers.card,
+        {
+          marginTop: -50,
+          backgroundColor: styles.Colors.surface,
+        }
+      ]}>
+        <View style={{ gap: 5 }}>
+          <Text style={styles.Typography.caption}>
+            🎨 Тема: {themeOptions.find(t => t.value === theme)?.label}
+          </Text>
+          <Text style={styles.Typography.caption}>
+            🧩 Сложность: {difficulty.label}
+          </Text>
+          <Text style={styles.Typography.caption}>
+            👤 Игрок: {playerName}
+          </Text>
+        </View>
       </View>
     </View>
   );
 };
-
-// Стили компонента
-const styles = StyleSheet.create({
-  // Основной контейнер экрана
-  container: {
-    flex: 1, // Занимает все доступное пространство
-    justifyContent: 'center', // Выравнивание по центру по вертикали
-    alignItems: 'center', // Выравнивание по центру по горизонтали
-    backgroundColor: '#f0f0f0', // Светло-серый фон
-  },
-  // Стиль заголовка
-  title: {
-    fontSize: 32, // Размер шрифта
-    fontWeight: 'bold', // Жирное начертание
-    marginBottom: 50, // Отступ снизу
-  },
-  // Контейнер для кнопок
-  buttonContainer: {
-    gap: 15, // Расстояние между кнопками
-    width: 200, // Фиксированная ширина контейнера
-  },
-});
 
 export default HomeScreen;

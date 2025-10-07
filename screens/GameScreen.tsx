@@ -1,199 +1,256 @@
 // screens/GameScreen.tsx
 import React, { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { View, Text, TouchableOpacity, Alert } from 'react-native'
+// Импорт глобальных стилей и контекста настроек
+import { useGameSettings } from '../contexts/GameSettingsContext';
+import { createStyles, Utils } from '../styles/GlobalStyles'
 
-// Тип для свойств компонента (пропсов)
+// Определение типа для свойств компонента (пропсов)
 type Props = {
-  navigation: any; // Объект навигации для перехода между экранами
+  navigation: any; // Объект для навигации между экранами
+  route: any; // Параметры, переданные при переходе на этот экран
 };
 
-// Функция создания начального игрового поля (числа 1-15 + пустая клетка 0)
-const createInitialBoard = (): number[] => {
-  return [...Array(15).keys()].map(i => i + 1).concat(0);
+// Функция создания начального игрового поля с числами по порядку
+const createInitialBoard = (tails: number): number[] => {
+  // Создание массива чисел от 1 до tails и добавление 0 в конец
+  return [...Array(tails).keys()].map(i => i + 1).concat(0);
+};
+
+// Функция создания тестового поля для отладки (переставлены последние две клетки)
+const createTestBoard = (tails: number): number[] => {
+  const solvedBoard = createInitialBoard(tails); // Получаем решенное поле
+  if (tails === 8) {
+    const testBoard = [...solvedBoard]; // Создаем копию массива
+    [testBoard[7], testBoard[8]] = [testBoard[8], testBoard[7]]; // Меняем местами последние две клетки
+    return testBoard; // Возвращаем тестовое поле [1,2,3,4,5,6,7,0,8]
+  }
+  return solvedBoard; // Для других размеров возвращаем обычное поле
+};
+
+// Функция проверки решаемости головоломки
+const isSolvable = (board: number[], rows: number, columns: number): boolean => {
+  let inversions = 0;
+  const flatBoard = board.filter(cell => cell !== 0); // Убираем пустую клетку из расчета
+
+  // Считаем количество инверсий (когда большее число стоит перед меньшим)
+  for (let i = 0; i < flatBoard.length; i++) {
+    for (let j = i + 1; j < flatBoard.length; j++) {
+      if (flatBoard[i] > flatBoard[j]) inversions++;
+    }
+  }
+
+  // Логика проверки решаемости в зависимости от четности количества строк
+  if (rows % 2 === 1) {
+    // Для нечетных сеток (3x3, 5x5) - должно быть четное число инверсий
+    return inversions % 2 === 0;
+  } else {
+    // Для четных сеток (4x4) - учитываем положение пустой клетки (снизу-вверх)
+    const emptyRowFromBottom = rows - Math.floor(board.indexOf(0) / rows);
+    return (inversions + emptyRowFromBottom) % 2 === 1;
+  }
+};
+
+// Умная функция перемешивания, гарантирующая решаемость
+const shuffleBoard = (initialBoard: number[], rows: number, columns: number): number[] => {
+  let shuffled;
+  let attempts = 0;
+  const maxAttempts = 100; // Защита от бесконечного цикла
+
+  // Цикл поиска решаемой конфигурации
+  do {
+    // Алгоритм Фишера-Йейтса для случайного перемешивания
+    shuffled = [...initialBoard];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    attempts++;
+
+    // Защита от бесконечного цикла - если долго не находится решаемая конфигурация
+    if (attempts > maxAttempts) {
+      // Альтернативный подход: создаем решаемую конфигурацию через случайные ходы
+      const tempBoard = [...initialBoard];
+      const emptyIndex = tempBoard.indexOf(0);
+      const possibleMoves = [];
+
+      // Находим все возможные ходы из решенного состояния
+      const emptyRow = Math.floor(emptyIndex / rows);
+      const emptyCol = emptyIndex % columns;
+
+      // Добавляем возможные направления движения пустой клетки
+      if (emptyRow > 0) possibleMoves.push(emptyIndex - columns); // сверху
+      if (emptyRow < rows - 1) possibleMoves.push(emptyIndex + columns); // снизу
+      if (emptyCol > 0) possibleMoves.push(emptyIndex - 1); // слева
+      if (emptyCol < columns - 1) possibleMoves.push(emptyIndex + 1); // справа
+
+      // Делаем 20 случайных ходов для перемешивания
+      let currentBoard = [...tempBoard];
+      for (let i = 0; i < 20; i++) {
+        const moveIndex = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+        const emptyIdx = currentBoard.indexOf(0);
+        [currentBoard[moveIndex], currentBoard[emptyIdx]] = [currentBoard[emptyIdx], currentBoard[moveIndex]];
+      }
+      return currentBoard;
+    }
+  } while (!isSolvable(shuffled, rows, columns)); // Повторяем пока не найдем решаемую конфигурацию
+
+  return shuffled;
 };
 
 // Основной компонент игрового экрана
-const GameScreen = ({ navigation }: Props) => {
-  // Состояние игрового поля (массив чисел)
+const GameScreen = ({ navigation, route }: Props) => {
+  // Получение текущей темы из контекста настроек
+  const { theme } = useGameSettings();
+  // Создание стилей на основе текущей темы
+  const styles = createStyles(theme);
+
+  // Получение параметров игры из навигации или установка значений по умолчанию
+  const { tails = 15, rows = 4, columns = 4, testMode = false } = route.params || {};
+
+  // Проверка корректности параметров игрового поля
+  if (rows * columns !== tails + 1) {
+    Alert.alert('Ошибка', 'Некорректные параметры поля');
+    navigation.goBack(); // Возврат на предыдущий экран при ошибке
+    return null; // Прекращение рендеринга компонента
+  }
+
+  // Состояние для хранения текущего игрового поля
   const [board, setBoard] = useState<number[]>([]);
-  // Состояние счетчика ходов
+  // Состояние для подсчета количества ходов
   const [moves, setMoves] = useState(0);
+
+  // Расчет размера клетки на основе количества колонок
+  const cellSize = Utils.getCellSize(columns);
 
   // Функция инициализации новой игры
   const initGame = () => {
-    const initialBoard = createInitialBoard()
-    // Перемешиваем клетки случайным образом
-    const shuffled = [...initialBoard].sort(() => Math.random() - 0.5)
-    setBoard(shuffled)
-    setMoves(0)
+    let initialBoard;
+    if (testMode) {
+      // В тестовом режиме используем специальное поле
+      initialBoard = createTestBoard(tails);
+    } else {
+      // В обычном режиме создаем и умно перемешиваем поле
+      initialBoard = createInitialBoard(tails);
+      initialBoard = shuffleBoard(initialBoard, rows, columns);
+    }
+    // Установка начального состояния игры
+    setBoard(initialBoard);
+    setMoves(0);
   };
 
-  // Эффект для запуска игры при монтировании компонента
+  // Эффект для инициализации игры при изменении параметров
   useEffect(() => {
     initGame();
-  }, [])
+  }, [tails, rows, columns, testMode]); // Зависимости: параметры игры
 
   // Функция проверки, решена ли головоломка
   const isSolved = (currentBoard: number[]): boolean => {
-    const solvedBoard = createInitialBoard();
-    return currentBoard.every((cell, index) => cell === solvedBoard[index]);
+    return currentBoard.every((cell, index) => {
+      if (index === currentBoard.length - 1) {
+        return cell === 0; // Последняя клетка должна быть пустой
+      }
+      return cell === index + 1; // Все остальные клетки должны быть по порядку
+    });
   };
 
-  // Обработчик нажатия на клетку
+  // Эффект для проверки победы при изменении состояния поля или количества ходов
+  useEffect(() => {
+    if (board.length > 0 && isSolved(board)) {
+      // Показ уведомления о победе
+      Alert.alert('Победа!', `Вы собрали головоломку за ${moves} ходов!`, [
+        { text: 'На главную', onPress: () => navigation.goBack() }
+      ]);
+    }
+  }, [board, moves]); // Срабатывает при изменении игрового поля или количества ходов
+
+  // Обработчик нажатия на клетку игрового поля
   const handleCellPress = (index: number) => {
-    // Игнорируем нажатие на пустую клетку
-    if (board[index] === 0) return;
+    if (board[index] === 0) return; // Игнорирование нажатия на пустую клетку
 
-    // Находим индекс пустой клетки
+    // Поиск индекса пустой клетки
     const emptyIndex = board.indexOf(0);
-    // Вычисляем строку и столбец нажатой клетки
-    const row = Math.floor(index / 4)
-    const column = index % 4;
-    // Вычисляем строку и столбец пустой клетки
-    const emptyRow = Math.floor(emptyIndex / 4);
-    const emptyColumn = emptyIndex % 4;
 
-    // Проверяем, является ли клетка соседней с пустой (по вертикали или горизонтали)
+    // Расчет координат нажатой клетки
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+
+    // Расчет координат пустой клетки
+    const emptyRow = Math.floor(emptyIndex / columns);
+    const emptyColumn = emptyIndex % columns;
+
+    // Проверка, является ли нажатая клетка соседней с пустой
     const isNeighbor = (Math.abs(row - emptyRow) === 1 && column === emptyColumn) ||
       (Math.abs(column - emptyColumn) === 1 && row === emptyRow);
 
-    // Если клетка соседняя с пустой - перемещаем ее
+    // Если клетка соседняя - выполняем перемещение
     if (isNeighbor) {
-      const newBoard = [...board];
+      const newBoard = [...board]; // Создаем копию массива
       // Меняем местами нажатую клетку и пустую клетку
-      [newBoard[index], newBoard[emptyIndex]] = [newBoard[emptyIndex], newBoard[index]]
+      [newBoard[index], newBoard[emptyIndex]] = [newBoard[emptyIndex], newBoard[index]];
 
+      // Обновление состояния игры
       setBoard(newBoard);
       setMoves(moves + 1);
-
-      // Проверяем, решена ли головоломка после хода
-      if (isSolved(newBoard)) {
-        Alert.alert('Победа', `Шаги: ${moves + 1}`, [{ text: 'На главную', onPress: () => navigation.navigate('Home') }]);
-      };
-    };
+    }
   };
 
   // Функция рендеринга одной клетки игрового поля
   const renderCell = (value: number, index: number) => {
-    const isEmpty = value === 0;
+    const isEmpty = value === 0; // Проверка, является ли клетка пустой
 
     return (
       <TouchableOpacity
         key={index}
-        style={[styles.cell, isEmpty && styles.emptyCell]}
+        style={[
+          styles.GameStyles.cell,
+          isEmpty && styles.GameStyles.emptyCell,
+          {
+            width: cellSize,
+            height: cellSize,
+            margin: 5
+          }
+        ]}
         onPress={() => handleCellPress(index)}
-        disabled={isEmpty}>
-        {/* Отображаем число, если клетка не пустая */}
-        {!isEmpty && (<Text style={styles.cellText}>{value}</Text>)}
+        disabled={isEmpty}
+      >
+        {!isEmpty && (<Text style={styles.GameStyles.cellText}>{value}</Text>)}
       </TouchableOpacity>
-    )
+    );
   };
 
   // Основной рендеринг компонента
   return (
-    <View style={styles.container}>
-      {/* Заголовок игры */}
-      <Text style={styles.title}>15 Puzzle</Text>
-      {/* Счетчик ходов */}
-      <Text style={styles.moves}>Шаги: {moves}</Text>
-
-      {/* Игровое поле 4x4 */}
-      <View style={styles.board}>
+    <View style={styles.Containers.centered}>
+      <Text style={styles.Typography.heading}>Пазл {tails}</Text>
+      <Text style={styles.Typography.body}>{rows} × {columns}</Text>
+      {testMode && (
+        <Text style={[styles.Typography.caption, { color: styles.Colors.accent, fontWeight: 'bold' }]}>
+          🔧 Тестовый режим
+        </Text>
+      )}
+      <Text style={styles.Typography.body}>Шаги: {moves}</Text>
+      <View style={[
+        styles.GameStyles.board,
+        {
+          width: Utils.maxBoardSize,
+          height: Utils.maxBoardSize,
+          flexWrap: 'wrap' as 'wrap',
+          flexDirection: 'row' as 'row'
+        }
+      ]}>
         {board.map((cell, index) => renderCell(cell, index))}
       </View>
-
-      {/* Панель управления */}
-      <View style={styles.buttons}>
-        {/* Кнопка начала новой игры */}
-        <TouchableOpacity style={styles.button} onPress={initGame}>
-          <Text style={styles.buttonText}>Заново</Text>
+      <View style={{ flexDirection: 'row', gap: 15 }}>
+        <TouchableOpacity style={styles.Buttons.primary} onPress={initGame}>
+          <Text style={styles.Typography.button}>Заново</Text>
         </TouchableOpacity>
-        {/* Кнопка возврата в главное меню */}
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')} >
-          <Text style={styles.buttonText}>В меню</Text>
+        <TouchableOpacity style={styles.Buttons.primary} onPress={() => navigation.goBack()}>
+          <Text style={styles.Typography.button}>В меню</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
-
-// Стили компонента
-const styles = StyleSheet.create({
-  // Основной контейнер экрана
-  container: {
-    flex: 1, // Занимает все доступное пространство
-    alignItems: 'center', // Выравнивание по центру по горизонтали
-    justifyContent: 'center', // Выравнивание по центру по вертикали
-    backgroundColor: '#f0f0f0', // Светло-серый фон
-    padding: 20, // Внутренние отступы
-  },
-  // Стиль заголовка игры
-  title: {
-    fontSize: 28, // Размер шрифта
-    fontWeight: 'bold', // Жирное начертание
-    marginBottom: 10, // Отступ снизу
-  },
-  // Стиль счетчика ходов
-  moves: {
-    fontSize: 18, // Размер шрифта
-    marginBottom: 20, // Отступ снизу
-    color: '#666', // Серый цвет текста
-  },
-  // Стиль игрового поля
-  board: {
-    flexDirection: 'row', // Расположение в строку
-    flexWrap: 'wrap', // Перенос на новую строку
-    width: 300, // Фиксированная ширина
-    height: 300, // Фиксированная высота
-    backgroundColor: '#ddd', // Серый фон поля
-    borderRadius: 10, // Закругленные углы
-    padding: 5, // Внутренние отступы
-    marginBottom: 20, // Отступ снизу
-  },
-  // Стиль обычной клетки
-  cell: {
-    width: '23%', // Ширина 23% от родителя
-    height: '23%', // Высота 23% от родителя
-    margin: '1%', // Внешние отступы
-    backgroundColor: '#4CAF50', // Зеленый цвет фона
-    justifyContent: 'center', // Выравнивание по центру по вертикали
-    alignItems: 'center', // Выравнивание по центру по горизонтали
-    borderRadius: 8, // Закругленные углы
-    elevation: 3, // Тень для Android
-    shadowColor: '#000', // Цвет тени
-    shadowOffset: { width: 0, height: 2 }, // Смещение тени
-    shadowOpacity: 0.2, // Прозрачность тени
-    shadowRadius: 2, // Размытие тени
-  },
-  // Стиль пустой клетки
-  emptyCell: {
-    backgroundColor: 'transparent', // Прозрачный фон
-    elevation: 0, // Без тени
-    shadowOpacity: 0, // Без тени
-  },
-  // Стиль текста в клетке
-  cellText: {
-    fontSize: 20, // Размер шрифта
-    fontWeight: 'bold', // Жирное начертание
-    color: 'white', // Белый цвет текста
-  },
-  // Контейнер для кнопок
-  buttons: {
-    flexDirection: 'row', // Расположение в строку
-    gap: 15, // Расстояние между кнопками
-  },
-  // Стиль кнопки
-  button: {
-    backgroundColor: '#2196F3', // Синий цвет фона
-    paddingHorizontal: 20, // Горизонтальные отступы
-    paddingVertical: 10, // Вертикальные отступы
-    borderRadius: 8, // Закругленные углы
-  },
-  // Стиль текста кнопки
-  buttonText: {
-    color: 'white', // Белый цвет текста
-    fontWeight: 'bold', // Жирное начертание
-  },
-});
 
 export default GameScreen;
