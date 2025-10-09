@@ -1,8 +1,9 @@
 // screens/HomeScreen.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useGameSettings, gameModes } from '../contexts/GameSettingsContext'; // Добавлен импорт gameModes
+import { useGameSettings, gameModes } from '../contexts/GameSettingsContext';
 import { createStyles } from '../styles/GlobalStyles';
+import { useGameSounds } from '../hooks/useGameSound';
 
 type Props = {
   navigation: any;
@@ -17,10 +18,22 @@ const themeOptions = [
 const HomeScreen = ({ navigation }: Props) => {
   const { boardSize, theme, playerName, gameMode } = useGameSettings();
   const styles = createStyles(theme);
+  const { playButtonSound } = useGameSounds();
 
-  const getCurrentModeLabel = () => {
-    const currentMode = gameModes.find(mode => mode.value === gameMode); // Исправлено: gameModes.find вместо gameMode.find
-    return currentMode?.label || '🏆 Классика';
+
+  const handlePlay = async () => {
+    await playButtonSound();
+    navigation.navigate('Game', boardSize);
+  };
+
+  const handleLeaderboard = async () => {
+    await playButtonSound();
+    navigation.navigate('Leaderboard');
+  };
+
+  const handleSettings = async () => {
+    await playButtonSound();
+    navigation.navigate('Settings');
   };
 
   return (
@@ -31,7 +44,7 @@ const HomeScreen = ({ navigation }: Props) => {
         <View style={{ gap: 15, width: 250, marginTop: 50 }}>
           <TouchableOpacity
             style={styles.Buttons.primary}
-            onPress={() => navigation.navigate('Game', boardSize)}
+            onPress={handlePlay}
           >
             <Text style={styles.Typography.button}>
               Играть
@@ -40,14 +53,14 @@ const HomeScreen = ({ navigation }: Props) => {
 
           <TouchableOpacity
             style={styles.Buttons.primary}
-            onPress={() => navigation.navigate('Leaderboard')}
+            onPress={handleLeaderboard}
           >
             <Text style={styles.Typography.button}>Рейтинг</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.Buttons.primary}
-            onPress={() => navigation.navigate('Settings')}
+            onPress={handleSettings}
           >
             <Text style={styles.Typography.button}>Настройки</Text>
           </TouchableOpacity>

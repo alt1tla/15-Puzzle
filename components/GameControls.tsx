@@ -3,14 +3,15 @@ import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, Modal, ScrollView } from 'react-native';
 import { useGameSettings, gameModes, GameMode, boardSizes } from '../contexts/GameSettingsContext';
 import { createStyles } from '../styles/GlobalStyles';
+import { useGameSounds } from '../hooks/useGameSound';
 
 type GameControlsProps = {
   onRestart: () => void;
   onMenu: () => void;
   showModeSelector?: boolean;
-  onOpenModeModal?: () => void; // Новый пропс для открытия модального окна
-  onCloseModeModal?: () => void; // Новый пропс для закрытия модального окна
-  showModeModal?: boolean; // Новый пропс для состояния модального окна
+  onOpenModeModal?: () => void;
+  onCloseModeModal?: () => void;
+  showModeModal?: boolean;
 };
 
 const GameControls: React.FC<GameControlsProps> = ({
@@ -23,17 +24,20 @@ const GameControls: React.FC<GameControlsProps> = ({
 }) => {
   const { theme, gameMode, setGameMode, boardSize } = useGameSettings();
   const styles = createStyles(theme);
+  const { playButtonSound } = useGameSounds();
   const [internalShowModeModal, setInternalShowModeModal] = useState(false);
 
   // Используем переданное состояние или внутреннее состояние
   const modalVisible = showModeModal !== undefined ? showModeModal : internalShowModeModal;
 
-  const handleModeSelect = (selectedMode: GameMode) => {
+  const handleModeSelect = async (selectedMode: GameMode) => {
+    await playButtonSound();
     setGameMode(selectedMode);
     handleCloseModal();
   };
 
-  const handleOpenModal = () => {
+  const handleOpenModal = async () => {
+    await playButtonSound();
     if (onOpenModeModal) {
       onOpenModeModal();
     } else {
@@ -41,12 +45,23 @@ const GameControls: React.FC<GameControlsProps> = ({
     }
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = async () => {
+    await playButtonSound();
     if (onCloseModeModal) {
       onCloseModeModal();
     } else {
       setInternalShowModeModal(false);
     }
+  };
+
+  const handleRestartWithSound = async () => {
+    await playButtonSound();
+    onRestart();
+  };
+
+  const handleMenuWithSound = async () => {
+    await playButtonSound();
+    onMenu();
   };
 
   const getCurrentModeLabel = () => {
@@ -76,10 +91,10 @@ const GameControls: React.FC<GameControlsProps> = ({
 
       {/* Основные кнопки управления */}
       <View style={{ flexDirection: 'row', gap: 15 }}>
-        <TouchableOpacity style={styles.Buttons.primary} onPress={onRestart}>
+        <TouchableOpacity style={styles.Buttons.primary} onPress={handleRestartWithSound}>
           <Text style={styles.Typography.button}>Заново</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.Buttons.primary} onPress={onMenu}>
+        <TouchableOpacity style={styles.Buttons.primary} onPress={handleMenuWithSound}>
           <Text style={styles.Typography.button}>В меню</Text>
         </TouchableOpacity>
       </View>

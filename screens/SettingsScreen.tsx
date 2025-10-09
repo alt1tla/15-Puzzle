@@ -2,8 +2,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StatusBar, Platform, Switch } from 'react-native';
 import { useGameSettings, boardSizes } from '../contexts/GameSettingsContext';
-import { useAudioSettings } from '../contexts/AudioSettingsContext'; // Добавляем этот импорт
+import { useAudioSettings } from '../contexts/AudioSettingsContext';
 import { createStyles } from '../styles/GlobalStyles';
+import { useGameSounds } from '../hooks/useGameSound';
 
 type Props = {
   navigation: any;
@@ -12,6 +13,7 @@ type Props = {
 const SettingsScreen = ({ navigation }: Props) => {
   const { boardSize, setBoardSize, theme, setTheme, playerName } = useGameSettings();
   const styles = createStyles(theme);
+  const { playButtonSound } = useGameSounds();
 
   // Добавляем настройки аудио
   const {
@@ -31,13 +33,15 @@ const SettingsScreen = ({ navigation }: Props) => {
   );
 
   // Обработчик переключения размера поля вперед
-  const handleNextBoardSize = () => {
+  const handleNextBoardSize = async () => {
+    await playButtonSound();
     const nextIndex = (currentBoardSizeIndex + 1) % boardSizes.length;
     setBoardSize(boardSizes[nextIndex]);
   };
 
   // Обработчик переключения размера поля назад
-  const handlePrevBoardSize = () => {
+  const handlePrevBoardSize = async () => {
+    await playButtonSound();
     const prevIndex = currentBoardSizeIndex === 0
       ? boardSizes.length - 1
       : currentBoardSizeIndex - 1;
@@ -45,8 +49,39 @@ const SettingsScreen = ({ navigation }: Props) => {
   };
 
   // Обработчик выбора темы
-  const handleThemeSelect = (selectedTheme: 'light' | 'dark' | 'retro') => {
+  const handleThemeSelect = async (selectedTheme: 'light' | 'dark' | 'retro') => {
+    await playButtonSound();
     setTheme(selectedTheme);
+  };
+
+  // Обработчик сохранения и возврата
+  const handleSave = async () => {
+    await playButtonSound();
+    navigation.goBack();
+  };
+
+  // Обработчик переключения музыки
+  const handleToggleMusic = async () => {
+    await playButtonSound();
+    toggleMusic();
+  };
+
+  // Обработчик переключения звуковых эффектов
+  const handleToggleSoundEffects = async () => {
+    await playButtonSound();
+    toggleSoundEffects();
+  };
+
+  // Обработчик изменения громкости музыки
+  const handleMusicVolumeChange = async (volume: number) => {
+    await playButtonSound();
+    setMusicVolume(volume);
+  };
+
+  // Обработчик изменения громкости эффектов
+  const handleEffectsVolumeChange = async (volume: number) => {
+    await playButtonSound();
+    setEffectsVolume(volume);
   };
 
   // Описания тем для отображения
@@ -146,7 +181,7 @@ const SettingsScreen = ({ navigation }: Props) => {
             </View>
             <Switch
               value={isMusicEnabled}
-              onValueChange={toggleMusic}
+              onValueChange={handleToggleMusic}
               trackColor={{ false: styles.Colors.border, true: styles.Colors.primary }}
               thumbColor={styles.Colors.surface}
             />
@@ -200,7 +235,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                         ? styles.Colors.primary
                         : 'transparent',
                     }}
-                    onPress={() => setMusicVolume(volume)}
+                    onPress={() => handleMusicVolumeChange(volume)}
                   >
                     <Text style={[
                       styles.Typography.caption,
@@ -237,7 +272,7 @@ const SettingsScreen = ({ navigation }: Props) => {
             </View>
             <Switch
               value={isSoundEffectsEnabled}
-              onValueChange={toggleSoundEffects}
+              onValueChange={handleToggleSoundEffects}
               trackColor={{ false: styles.Colors.border, true: styles.Colors.primary }}
               thumbColor={styles.Colors.surface}
             />
@@ -292,7 +327,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                         ? styles.Colors.primary
                         : 'transparent',
                     }}
-                    onPress={() => setEffectsVolume(volume)}
+                    onPress={() => handleEffectsVolumeChange(volume)}
                   >
                     <Text style={[
                       styles.Typography.caption,
@@ -447,7 +482,7 @@ const SettingsScreen = ({ navigation }: Props) => {
           style={[
             styles.Buttons.primary,
           ]}
-          onPress={() => navigation.goBack()}
+          onPress={handleSave}
         >
           <Text style={styles.Typography.button}>Сохранить</Text>
         </TouchableOpacity>

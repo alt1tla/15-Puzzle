@@ -4,42 +4,10 @@ import { audioService } from '../services/AudioService';
 import { useAudioSettings } from '../contexts/AudioSettingsContext';
 
 export const useGameSounds = () => {
-  const { isMusicEnabled, isSoundEffectsEnabled } = useAudioSettings();
+  const { isSoundEffectsEnabled } = useAudioSettings();
 
-  // Инициализация аудио при монтировании
-  useEffect(() => {
-    const initAudio = async () => {
-      try {
-        await audioService.initialize();
-        console.log('Game sounds initialized');
-      } catch (error) {
-        console.error('Failed to initialize game sounds:', error);
-      }
-    };
-
-    initAudio();
-
-    return () => {
-      audioService.unloadAllSounds();
-    };
-  }, []);
-
-  // Управление фоновой музыкой
-  useEffect(() => {
-    const handleBackgroundMusic = async () => {
-      try {
-        if (isMusicEnabled) {
-          await audioService.playBackgroundMusic();
-        } else {
-          await audioService.stopBackgroundMusic();
-        }
-      } catch (error) {
-        console.error('Error handling background music:', error);
-      }
-    };
-
-    handleBackgroundMusic();
-  }, [isMusicEnabled]);
+  // Убираем инициализацию аудио здесь - она теперь в провайдере
+  // Убираем управление фоновой музыкой - она теперь глобальная
 
   // Функции для воспроизведения звуков
   const playMoveSound = async () => {

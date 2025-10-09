@@ -21,13 +21,17 @@ export const AudioSettingsProvider = ({ children }: { children: ReactNode }) => 
   const [musicVolume, setMusicVolumeState] = useState(0.3);
   const [effectsVolume, setEffectsVolumeState] = useState(0.7);
 
-  // Инициализация аудио сервиса
+  // Инициализация аудио сервиса при запуске приложения
   useEffect(() => {
     const initAudio = async () => {
       await audioService.initialize();
+      // Автоматически запускаем музыку если она включена
+      if (isMusicEnabled) {
+        await audioService.playBackgroundMusic();
+      }
     };
     initAudio();
-  }, []);
+  }, []); // Пустой массив зависимостей - выполняется только при монтировании
 
   const toggleMusic = async () => {
     const newState = !isMusicEnabled;

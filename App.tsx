@@ -13,11 +13,11 @@ const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <GameSettingsProvider>
-      <AudioSettingsProvider>
+    <AudioSettingsProvider> 
+      <GameSettingsProvider>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Home" screenOptions={{
-            headerShown: false // Убираем заголовок для всех экранов
+            headerShown: false
           }}>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Game" component={GameScreen} />
@@ -25,7 +25,7 @@ export default function App() {
             <Stack.Screen name="Settings" component={SettingsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
-      </AudioSettingsProvider>
-    </GameSettingsProvider>
+      </GameSettingsProvider>
+    </AudioSettingsProvider>
   );
 }

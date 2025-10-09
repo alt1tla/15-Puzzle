@@ -131,6 +131,7 @@ class AudioService {
       if (sound && !this.isBackgroundMusicPlaying) {
         await sound.playAsync();
         this.isBackgroundMusicPlaying = true;
+        console.log("Background music started");
       }
     } catch (error) {
       console.error("Error playing background music:", error);
@@ -144,6 +145,7 @@ class AudioService {
         await sound.stopAsync();
         await sound.setPositionAsync(0);
         this.isBackgroundMusicPlaying = false;
+        console.log("Background music stopped");
       }
     } catch (error) {
       console.error("Error stopping background music:", error);
@@ -166,6 +168,11 @@ class AudioService {
         await sound.setVolumeAsync(volume);
       }
     }
+  }
+
+  // Получение статуса музыки
+  getBackgroundMusicStatus(): boolean {
+    return this.isBackgroundMusicPlaying;
   }
 
   // Очистка ресурсов
