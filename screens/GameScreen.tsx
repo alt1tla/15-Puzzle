@@ -6,11 +6,12 @@ import { createStyles } from '../styles/GlobalStyles';
 import GameHeader from '../components/GameHeader';
 import GameBoard from '../components/GameBoard';
 import GameControls from '../components/GameControls';
-import { 
-  createInitialBoard, 
-  createTestBoard, 
-  shuffleBoard, 
-  isSolved 
+import { useGameSounds } from '../hooks/useGameSound';
+import {
+  createInitialBoard,
+  createTestBoard,
+  shuffleBoard,
+  isSolved
 } from '../utils/gameLogic';
 
 type Props = {
@@ -21,6 +22,13 @@ type Props = {
 const GameScreen = ({ navigation, route }: Props) => {
   const { theme, gameMode, addScore, boardSize, getTimeLimit } = useGameSettings();
   const styles = createStyles(theme);
+  const {
+    playMoveSound,
+    playCantMoveSound,
+    playWinSound,
+    playGameOverSound,
+    playButtonSound
+  } = useGameSounds();
 
   const { tails = 15, rows = 4, columns = 4, testMode = false } = route.params || {};
 
@@ -37,7 +45,7 @@ const GameScreen = ({ navigation, route }: Props) => {
   const [isGameActive, setIsGameActive] = useState(false);
   const [isTimerRunning, setIsTimerRunning] = useState(false); // Новое состояние для отслеживания запуска таймера
   const [showModeModal, setShowModeModal] = useState(false); // Новое состояние для модального окна
-  
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const timeLimit = getTimeLimit();
 
@@ -80,19 +88,33 @@ const GameScreen = ({ navigation, route }: Props) => {
   }, [isGameActive, isTimerRunning, gameMode, timeLimit, showModeModal]); // Добавлена зависимость showModeModal
 
   // Обработка окончания времени в режиме time_attack
-  const handleTimeUp = () => {
+  const handleTimeUp = async () => {
     setIsGameActive(false);
     setIsTimerRunning(false);
+
+    // Воспроизводим звук окончания игры
+    await playGameOverSound();
+
     const minutes = Math.floor(timeLimit / 60);
     const seconds = timeLimit % 60;
     Alert.alert(
-      'Время вышло!', 
+      'Время вышло!',
       `Лимит времени (${minutes}:${seconds.toString().padStart(2, '0')}) истек. Сделано ходов: ${moves}`,
       [
         { text: 'Попробовать снова', onPress: initGame },
         { text: 'В меню', onPress: () => navigation.goBack() }
       ]
     );
+  };
+
+  const handleRestart = async () => {
+    await playButtonSound();
+    initGame();
+  };
+
+  const handleMenu = async () => {
+    await playButtonSound();
+    navigation.goBack();
   };
 
   // Функция инициализации новой игры
@@ -122,7 +144,10 @@ const GameScreen = ({ navigation, route }: Props) => {
     if (board.length > 0 && isSolved(board) && isGameActive) {
       setIsGameActive(false);
       setIsTimerRunning(false);
-      
+
+      // Воспроизводим звук победы
+      playWinSound();
+
       // Сохранение результата
       const scoreRecord = {
         boardSize: boardSize.label,
@@ -140,7 +165,7 @@ const GameScreen = ({ navigation, route }: Props) => {
         const minutes = Math.floor(time / 60);
         const seconds = time % 60;
         const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        
+
         if (gameMode === 'timed') {
           message = `Вы собрали головоломку за ${timeString} и ${moves} ходов!`;
         } else if (gameMode === 'time_attack') {
@@ -159,7 +184,7 @@ const GameScreen = ({ navigation, route }: Props) => {
   }, [board, moves, isGameActive]);
 
   // Обработчик нажатия на клетку
-  const handleCellPress = (index: number) => {
+  const handleCellPress = async (index: number) => {
     if (board[index] === 0 || !isGameActive) return;
 
     // Запускаем таймер при первом прикосновении
@@ -181,6 +206,9 @@ const GameScreen = ({ navigation, route }: Props) => {
       [newBoard[index], newBoard[emptyIndex]] = [newBoard[emptyIndex], newBoard[index]];
       setBoard(newBoard);
       setMoves(moves + 1);
+      await playMoveSound(); // Звук перемещения
+    } else {
+      await playCantMoveSound(); // Звук невозможности перемещения
     }
   };
 
@@ -214,7 +242,7 @@ const GameScreen = ({ navigation, route }: Props) => {
 
   return (
     <View style={styles.Containers.centered}>
-      <GameHeader 
+      <GameHeader
         tails={tails}
         rows={rows}
         columns={columns}
@@ -225,16 +253,16 @@ const GameScreen = ({ navigation, route }: Props) => {
         timeLimit={gameMode === 'time_attack' ? timeLimit : undefined}
         currentTime={time}
       />
-      
-      <GameBoard 
+
+      <GameBoard
         board={board}
         columns={columns}
         onCellPress={handleCellPress}
       />
-      
-      <GameControls 
-        onRestart={initGame}
-        onMenu={() => navigation.goBack()}
+
+      <GameControls
+        onRestart={handleRestart}
+        onMenu={handleMenu}
         showModeSelector={true}
         onOpenModeModal={handleOpenModeModal} // Передаем обработчик открытия модального окна
         onCloseModeModal={handleCloseModeModal} // Передаем обработчик закрытия модального окна
