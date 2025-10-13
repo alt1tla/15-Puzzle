@@ -1,6 +1,6 @@
 // screens/HomeScreen.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { useGameSettings, gameModes } from '../contexts/GameSettingsContext';
 import { createStyles } from '../styles/GlobalStyles';
 import { useGameSounds } from '../hooks/useGameSound';
@@ -11,8 +11,8 @@ type Props = {
 
 const themeOptions = [
   { value: 'light' as const, icon: '🌞', label: 'Светлая' },
-  { value: 'dark' as const, icon: '🌙', label: 'Тёмная' },
-  { value: 'chinese' as const, icon: '🎮', label: 'Ретро' },
+  { value: 'dark' as const, icon: '🌚', label: 'Тёмная' },
+  { value: 'chinese' as const, icon: '🐲', label: 'Китай' },
 ];
 
 const HomeScreen = ({ navigation }: Props) => {
@@ -36,53 +36,53 @@ const HomeScreen = ({ navigation }: Props) => {
     navigation.navigate('Settings');
   };
 
+  const statusBarHeight = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
+
+
   return (
     <View style={styles.Containers.screen}>
-      <View style={styles.Containers.centered}>
-        <Text style={styles.Typography.title}>15 Puzzle</Text>
-
-        <View style={{ gap: 15, width: 250, marginTop: 50 }}>
-          <TouchableOpacity
-            style={styles.Buttons.primary}
-            onPress={handlePlay}
-          >
-            <Text style={styles.Typography.button}>
-              Играть
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.Buttons.primary}
-            onPress={handleLeaderboard}
-          >
-            <Text style={styles.Typography.button}>Рейтинг</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.Buttons.primary}
-            onPress={handleSettings}
-          >
-            <Text style={styles.Typography.button}>Настройки</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
       <View style={[
         styles.Containers.card,
         {
-          marginTop: -50,
+          position: 'absolute',
+          top: statusBarHeight + 20 + 20,
+          left: 20,
+          zIndex: 1,
           backgroundColor: styles.Colors.surface,
         }
       ]}>
         <View style={{ gap: 5 }}>
           <Text style={styles.Typography.caption}>
-            🎨 Тема: {themeOptions.find(t => t.value === theme)?.label}
+            👤 {playerName}
           </Text>
-          <Text style={styles.Typography.caption}>
-            🧩 Размер: {boardSize.label}
-          </Text>
-          <Text style={styles.Typography.caption}>
-            👤 Игрок: {playerName}
-          </Text>
+        </View>
+      </View>
+      <View style={styles.Containers.centered}>
+        <Text style={styles.Typography.title}>15 Puzzle</Text>
+
+        <View style={{ gap: 5, width: 250, marginTop: 40 }}>
+          <TouchableOpacity
+            style={[styles.Buttons.primary, { marginBottom: 30 }]}
+            onPress={handlePlay}
+          >
+            <Text style={[styles.Typography.button, { fontWeight: 'bold' }]}>
+              Играть {boardSize.label}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.Buttons.secondary}
+            onPress={handleLeaderboard}
+          >
+            <Text style={styles.Typography.button}>Рейтинг (скоро)</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.Buttons.secondary}
+            onPress={handleSettings}
+          >
+            <Text style={styles.Typography.button}>Настройки</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>

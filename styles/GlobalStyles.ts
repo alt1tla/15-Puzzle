@@ -70,7 +70,6 @@ export const createStyles = (theme: "light" | "dark" | "chinese" = "light") => {
       },
       button: {
         fontSize: 16,
-        fontWeight: "bold" as "bold",
         color: Colors.textLight,
         textAlign: "center" as "center",
       },
@@ -81,6 +80,7 @@ export const createStyles = (theme: "light" | "dark" | "chinese" = "light") => {
         flex: 1,
         backgroundColor: Colors.background,
         padding: 20,
+        position: 'relative'
       },
       centered: {
         flex: 1,
@@ -109,8 +109,8 @@ export const createStyles = (theme: "light" | "dark" | "chinese" = "light") => {
       secondary: {
         backgroundColor: Colors.secondary,
         paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 8,
+        paddingVertical: 15,
+        borderRadius: 20,
       },
       outline: {
         backgroundColor: "transparent",

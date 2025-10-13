@@ -437,7 +437,7 @@ const SettingsScreen = ({ navigation }: Props) => {
           ]}
           onPress={handleSave}
         >
-          <Text style={styles.Typography.button}>Сохранить</Text>
+          <Text style={[styles.Typography.button, {fontWeight: 'bold'}]}>Сохранить</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

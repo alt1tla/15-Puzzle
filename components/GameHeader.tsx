@@ -16,11 +16,11 @@ type GameHeaderProps = {
   currentTime?: number;
 };
 
-const GameHeader: React.FC<GameHeaderProps> = ({ 
-  tails, 
-  rows, 
-  columns, 
-  moves, 
+const GameHeader: React.FC<GameHeaderProps> = ({
+  tails,
+  rows,
+  columns,
+  moves,
   testMode,
   time,
   gameMode,
@@ -50,47 +50,33 @@ const GameHeader: React.FC<GameHeaderProps> = ({
   const isTimeCritical = progress < 25;
 
   return (
-    <View style={{ alignItems: 'center', marginBottom: 20 }}>
-      <Text style={styles.Typography.heading}>
-        {getModeIcon()}Пазл {tails}
-      </Text>
-      <Text style={styles.Typography.body}>{rows} × {columns}</Text>
+    <View style={{ alignItems: 'center', marginBottom: 15, }}>
       {testMode && (
-        <Text style={[styles.Typography.caption, { color: styles.Colors.accent, fontWeight: 'bold' }]}>
-          🔧 Тестовый режим
+        <Text style={[styles.Typography.caption, { color: styles.Colors.accent, fontWeight: 'bold', marginBottom: 30 }]}>
+          Тестовый режим
         </Text>
       )}
-      <Text style={styles.Typography.body}>Шаги: {moves}</Text>
-      {time && (
-        <View style={{ alignItems: 'center', marginTop: 5 }}>
-          <Text style={[
-            styles.Typography.body, 
-            { 
-              fontWeight: 'bold', 
-              color: isTimeCritical ? styles.Colors.accent : styles.Colors.primary 
-            }
-          ]}>
-            {gameMode === 'time_attack' ? 'Осталось: ' : 'Время: '}{time}
-          </Text>
-          {gameMode === 'time_attack' && timeLimit && (
-            <View style={{
-              width: 150,
-              height: 6,
-              backgroundColor: styles.Colors.border,
-              borderRadius: 3,
-              marginTop: 5,
-              overflow: 'hidden'
-            }}>
-              <View style={{
-                width: `${progress}%`,
-                height: '100%',
-                backgroundColor: isTimeCritical ? styles.Colors.accent : styles.Colors.primary,
-                borderRadius: 3,
-              }} />
-            </View>
-          )}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 40, justifyContent: 'flex-start' }}>
+        <View style={{ alignItems: 'center', }}>
+          <Text style={styles.Typography.title}>{moves}</Text>
+          <Text style={styles.Typography.body}>Шаги</Text>
         </View>
-      )}
+        {time && (
+          <View style={{ alignItems: 'center', }}>
+            <Text style={[styles.Typography.title,
+            {
+              color: isTimeCritical ? styles.Colors.primary : styles.Colors.textPrimary
+            }
+            ]}>{time}</Text>
+            <Text style={[
+              styles.Typography.body,
+              { color: styles.Colors.textPrimary }
+            ]}>
+              Время
+            </Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 };
