@@ -150,10 +150,6 @@ const GameControls: React.FC<GameControlsProps> = ({
                           ? styles.Colors.primary
                           : styles.Colors.surface,
                         marginVertical: 5,
-                        borderWidth: 2,
-                        borderColor: gameMode === mode.value
-                          ? styles.Colors.primaryDark
-                          : styles.Colors.border
                       }
                     ]}
                     onPress={() => handleModeSelect(mode.value)}
@@ -175,7 +171,7 @@ const GameControls: React.FC<GameControlsProps> = ({
                         marginTop: 5,
                         color: gameMode === mode.value
                           ? styles.Colors.textLight
-                          : styles.Colors.textSecondary
+                          : styles.Colors.textPrimary
                       }
                     ]}>
                       {mode.description}

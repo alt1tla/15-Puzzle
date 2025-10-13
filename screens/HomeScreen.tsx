@@ -12,7 +12,7 @@ type Props = {
 const themeOptions = [
   { value: 'light' as const, icon: '🌞', label: 'Светлая' },
   { value: 'dark' as const, icon: '🌙', label: 'Тёмная' },
-  { value: 'retro' as const, icon: '🎮', label: 'Ретро' },
+  { value: 'chinese' as const, icon: '🎮', label: 'Ретро' },
 ];
 
 const HomeScreen = ({ navigation }: Props) => {

@@ -13,7 +13,7 @@ export type BoardSizeSettings = {
 };
 
 // Тип для темы приложения
-export type Theme = 'light' | 'dark' | 'retro';
+export type Theme = 'light' | 'dark' | 'chinese';
 
 // Тип: режимы игры
 export type GameMode = 'classic' | 'timed' | 'time_attack';
@@ -76,7 +76,7 @@ export const boardSizes: BoardSizeSettings[] = [
     timeLimit: 900 // 15 минут
   },
   { 
-    label: 'Тестовый 3x3', 
+    label: 'Тест', 
     tails: 8, 
     rows: 3, 
     columns: 3, 

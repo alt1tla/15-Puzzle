@@ -49,7 +49,7 @@ const SettingsScreen = ({ navigation }: Props) => {
   };
 
   // Обработчик выбора темы
-  const handleThemeSelect = async (selectedTheme: 'light' | 'dark' | 'retro') => {
+  const handleThemeSelect = async (selectedTheme: 'light' | 'dark' | 'chinese') => {
     await playButtonSound();
     setTheme(selectedTheme);
   };
@@ -87,8 +87,8 @@ const SettingsScreen = ({ navigation }: Props) => {
   // Описания тем для отображения
   const themeOptions = [
     { value: 'light' as const, icon: '🌞', label: 'Светлая' },
-    { value: 'dark' as const, icon: '🌙', label: 'Тёмная' },
-    { value: 'retro' as const, icon: '🎮', label: 'Ретро' },
+    { value: 'dark' as const, icon: '🌚', label: 'Тёмная' },
+    { value: 'chinese' as const, icon: '🐲', label: 'Китай' },
   ];
 
   // Высота статус-бара для разных платформ
@@ -109,48 +109,44 @@ const SettingsScreen = ({ navigation }: Props) => {
         }}
       >
 
-        <Text style={[styles.Typography.subtitle, { marginBottom: 20 }]}>Выбор темы</Text>
+        <Text style={[styles.Typography.title, { marginBottom: 40 }]}>Настройки</Text>
+
+        <Text style={[styles.Typography.subtitle, { marginBottom: 10 }]}>Тема</Text>
+
         <View style={{
           flexDirection: 'row',
-          justifyContent: 'center',
-          gap: 20,
-          marginBottom: 40
+          alignItems: 'center',
+          marginBottom: 30,
+          backgroundColor: styles.Colors.surface,
+          padding: 5,
+          borderRadius: 20
         }}>
           {themeOptions.map((themeOption) => (
             <TouchableOpacity
               key={themeOption.value}
               style={[
                 {
-                  width: 100,
+                  flexGrow: 1,
                   height: 100,
-                  borderRadius: 35,
+                  borderRadius: 15,
                   justifyContent: 'center',
                   alignItems: 'center',
                   backgroundColor: theme === themeOption.value
                     ? styles.Colors.primary
-                    : styles.Colors.surface,
-                  borderWidth: 3,
-                  borderColor: theme === themeOption.value
-                    ? styles.Colors.primaryDark
-                    : styles.Colors.border,
-                  elevation: theme === themeOption.value ? 4 : 2,
-                  shadowColor: styles.Colors.textPrimary,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 3,
+                    : 'transrepment',
                 }
               ]}
               onPress={() => handleThemeSelect(themeOption.value)}
             >
-              <Text style={{ fontSize: 24 }}>{themeOption.icon}</Text>
+              <Text style={{ fontSize: 48 }}>{themeOption.icon}</Text>
               <Text style={[
                 styles.Typography.caption,
                 {
                   marginTop: 5,
                   color: theme === themeOption.value
                     ? styles.Colors.textLight
-                    : styles.Colors.textSecondary,
-                  fontWeight: theme === themeOption.value ? 'bold' : 'normal'
+                    : styles.Colors.textPrimary,
+                  fontWeight: 'normal'
                 }
               ]}>
                 {themeOption.label}
@@ -159,11 +155,102 @@ const SettingsScreen = ({ navigation }: Props) => {
           ))}
         </View>
 
-        <Text style={[styles.Typography.subtitle, { marginBottom: 20 }]}>Настройки звука</Text>
+        <Text style={[styles.Typography.subtitle, { marginBottom: 10 }]}>
+          Размер поля
+        </Text>
+
+        <View style={{
+          alignItems: 'center',
+          marginBottom: 30,
+          elevation: 3,
+          height: 100,
+        }}>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 5,
+            width: '100%',
+            maxWidth: '100%'
+          }}>
+            <TouchableOpacity
+              style={{
+                width: 50,
+                height: '100%',
+                borderRadius: 20,
+                backgroundColor: styles.Colors.primary,
+                justifyContent: 'center',
+                alignItems: 'center',
+                elevation: 3,
+              }}
+              onPress={handlePrevBoardSize}
+            >
+              <Text style={{
+                fontSize: 20,
+                color: styles.Colors.textLight,
+                fontWeight: 'bold'
+              }}>
+                ←
+              </Text>
+            </TouchableOpacity>
+
+            <View style={{
+              flexDirection: 'column',
+              alignItems: 'center',
+              backgroundColor: styles.Colors.surface,
+              padding: 15,
+              borderRadius: 20,
+              flexGrow: 1
+            }}>
+              <Text style={[
+                styles.Typography.heading,
+                {
+                  color: styles.Colors.primary,
+                  fontSize: 48,
+                  lineHeight: 48
+                }
+              ]}>
+                {boardSize.label}
+              </Text>
+              <Text style={[
+                styles.Typography.body,
+                {
+                  color: styles.Colors.textPrimary
+                }
+              ]}>
+                {boardSize.testMode
+                  ? 'Тестовый режим'
+                  : `${getEstimatedTime(boardSize)}`}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={{
+                width: 50,
+                height: '100%',
+                borderRadius: 20,
+                backgroundColor: styles.Colors.primary,
+                justifyContent: 'center',
+                alignItems: 'center',
+                elevation: 3,
+              }}
+              onPress={handleNextBoardSize}
+            >
+              <Text style={{
+                fontSize: 20,
+                color: styles.Colors.textLight,
+                fontWeight: 'bold'
+              }}>
+                →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <Text style={[styles.Typography.subtitle, { marginBottom: 10 }]}>Музыка и звуки</Text>
 
         <View style={[
           styles.Containers.card,
-          { marginBottom: 15 }
         ]}>
           <View style={{
             flexDirection: 'row',
@@ -176,7 +263,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                 🎵 Фоновая музыка
               </Text>
               <Text style={[styles.Typography.caption, { marginTop: 4 }]}>
-                Музыка во время игры
+                Атмосферная мелодия во время игры
               </Text>
             </View>
             <Switch
@@ -189,9 +276,6 @@ const SettingsScreen = ({ navigation }: Props) => {
 
           {isMusicEnabled && (
             <View style={{ marginTop: 15 }}>
-              <Text style={[styles.Typography.caption, { marginBottom: 10 }]}>
-                Громкость музыки: {Math.round(musicVolume * 100)}%
-              </Text>
               <View style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -243,7 +327,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                         fontWeight: musicVolume === volume ? 'bold' : 'normal',
                         color: musicVolume === volume
                           ? styles.Colors.textLight
-                          : styles.Colors.textSecondary
+                          : styles.Colors.textPrimary
                       }
                     ]}>
                       {Math.round(volume * 100)}%
@@ -255,7 +339,10 @@ const SettingsScreen = ({ navigation }: Props) => {
           )}
         </View>
 
-        <View style={styles.Containers.card}>
+        <View style={[
+          styles.Containers.card,
+          { marginBottom: 30 }
+        ]}>
           <View style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
@@ -280,9 +367,6 @@ const SettingsScreen = ({ navigation }: Props) => {
 
           {isSoundEffectsEnabled && (
             <View style={{ marginTop: 15 }}>
-              <Text style={[styles.Typography.caption, { marginBottom: 10 }]}>
-                Громкость эффектов: {Math.round(effectsVolume * 100)}%
-              </Text>
               <View style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -335,7 +419,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                         fontWeight: effectsVolume === volume ? 'bold' : 'normal',
                         color: effectsVolume === volume
                           ? styles.Colors.textLight
-                          : styles.Colors.textSecondary
+                          : styles.Colors.textPrimary
                       }
                     ]}>
                       {Math.round(volume * 100)}%
@@ -345,137 +429,6 @@ const SettingsScreen = ({ navigation }: Props) => {
               </View>
             </View>
           )}
-        </View>
-
-        <Text style={[styles.Typography.subtitle, { marginBottom: 20, marginTop: 30 }]}>
-          Настройки размера поля
-        </Text>
-        <View style={{
-          alignItems: 'center',
-          marginBottom: 40,
-          padding: 20,
-          backgroundColor: styles.Colors.surface,
-          borderRadius: 15,
-          elevation: 3,
-          shadowColor: styles.Colors.textPrimary,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        }}>
-          <Text style={[
-            styles.Typography.heading,
-            {
-              fontSize: 22,
-              marginBottom: 10,
-              color: styles.Colors.primary,
-              fontWeight: 'bold'
-            }
-          ]}>
-            {boardSize.label}
-          </Text>
-          <Text style={[
-            styles.Typography.body,
-            {
-              marginBottom: 20,
-              color: styles.Colors.textSecondary
-            }
-          ]}>
-            Поле {boardSize.rows} × {boardSize.columns}
-          </Text>
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 30
-          }}>
-            <TouchableOpacity
-              style={{
-                width: 50,
-                height: 50,
-                borderRadius: 25,
-                backgroundColor: styles.Colors.primary,
-                justifyContent: 'center',
-                alignItems: 'center',
-                elevation: 3,
-              }}
-              onPress={handlePrevBoardSize}
-            >
-              <Text style={{
-                fontSize: 20,
-                color: styles.Colors.textLight,
-                fontWeight: 'bold'
-              }}>
-                ←
-              </Text>
-            </TouchableOpacity>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={[
-                styles.Typography.caption,
-                { color: styles.Colors.textSecondary }
-              ]}>
-                {currentBoardSizeIndex + 1} / {boardSizes.length}
-              </Text>
-              <View style={{
-                flexDirection: 'row',
-                gap: 5,
-                marginTop: 5
-              }}>
-                {boardSizes.map((_, index) => (
-                  <View
-                    key={index}
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: index === currentBoardSizeIndex
-                        ? styles.Colors.primary
-                        : styles.Colors.border,
-                    }}
-                  />
-                ))}
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={{
-                width: 50,
-                height: 50,
-                borderRadius: 25,
-                backgroundColor: styles.Colors.primary,
-                justifyContent: 'center',
-                alignItems: 'center',
-                elevation: 3,
-              }}
-              onPress={handleNextBoardSize}
-            >
-              <Text style={{
-                fontSize: 20,
-                color: styles.Colors.textLight,
-                fontWeight: 'bold'
-              }}>
-                →
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={{
-            marginTop: 20,
-            padding: 15,
-            backgroundColor: styles.Colors.background,
-            borderRadius: 10,
-            width: '100%'
-          }}>
-            <Text style={[
-              styles.Typography.caption,
-              {
-                textAlign: 'center',
-                color: styles.Colors.textSecondary,
-                fontStyle: 'italic'
-              }
-            ]}>
-              {boardSize.testMode
-                ? 'Тестовый режим для отладки'
-                : `Примерное время решения: ${getEstimatedTime(boardSize)}`}
-            </Text>
-          </View>
         </View>
 
         <TouchableOpacity
@@ -494,11 +447,11 @@ const SettingsScreen = ({ navigation }: Props) => {
 // Вспомогательная функция для оценки времени решения
 const getEstimatedTime = (boardSize: any): string => {
   const times: { [key: string]: string } = {
-    '3x3': '1-2 минуты',
-    '4x4': '3-5 минут',
-    '5x5': '10-15 минут',
-    '6x6': '20-30 минут',
-    'Тестовый 3x3': 'менее минуты'
+    '3x3': 'Решается за 2 минуты',
+    '4x4': 'База на 5 минут',
+    '5x5': 'Займёт 15 минут',
+    '6x6': 'Влипнешь на 30 минут',
+    'Тестовый': 'менее минуты'
   };
   return times[boardSize.label] || 'неизвестно';
 };

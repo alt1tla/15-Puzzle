@@ -11,7 +11,7 @@ export interface AppSettings {
     testMode?: boolean;
     timeLimit: number; // Теперь обязательное поле
   };
-  theme: "light" | "dark" | "retro";
+  theme: "light" | "dark" | "chinese";
   playerName: string;
   gameMode: "classic" | "timed" | "time_attack";
   scores: ScoreRecord[];
