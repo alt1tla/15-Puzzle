@@ -25,7 +25,7 @@ const GameCell: React.FC<GameCellProps> = ({ value, index, cellSize, onPress }) 
         {
           width: cellSize,
           height: cellSize,
-          margin: 5
+          margin: 2.5
         }
       ]}
       onPress={() => onPress(index)}

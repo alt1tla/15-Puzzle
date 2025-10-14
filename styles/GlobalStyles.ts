@@ -131,20 +131,16 @@ export const createStyles = (theme: "light" | "dark" | "chinese" = "light") => {
     GameStyles: StyleSheet.create({
       board: {
         backgroundColor: Colors.border,
-        borderRadius: 10,
-        padding: 5,
+        borderRadius: 20,
+        padding: 2.5,
         marginVertical: 20,
       },
       cell: {
         backgroundColor: Colors.secondary,
         justifyContent: "center" as "center",
         alignItems: "center" as "center",
-        borderRadius: 8,
+        borderRadius: 15,
         elevation: 3,
-        shadowColor: Colors.textPrimary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
       },
       emptyCell: {
         backgroundColor: "transparent",
@@ -152,7 +148,7 @@ export const createStyles = (theme: "light" | "dark" | "chinese" = "light") => {
         shadowOpacity: 0,
       },
       cellText: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: "bold" as "bold",
         color: Colors.textLight,
       },
@@ -168,7 +164,7 @@ export const createStyles = (theme: "light" | "dark" | "chinese" = "light") => {
 export const Utils = {
   maxBoardSize: Math.min(screenWidth - 40, 350),
   getCellSize: (columns: number) =>
-    (Math.min(screenWidth - 40, 350) - 10) / columns - 10,
+    (Math.min(screenWidth - 40, 350) - 5) / columns - 5,
 };
 
 // Экспорт для обратной совместимости

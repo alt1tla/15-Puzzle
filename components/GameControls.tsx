@@ -70,34 +70,31 @@ const GameControls: React.FC<GameControlsProps> = ({
   };
 
   return (
-    <View style={{ alignItems: 'center', gap: 15 }}>
+    <View style={{ alignItems: 'center', }}>
       {/* Селектор режима игры (если включен) */}
       {showModeSelector && (
-        <View style={{ alignItems: 'center' }}>
+        <View style={{ alignItems: 'center', flexDirection: 'row', gap: 5, justifyContent: 'space-between', width: '100%' }}>
+          <TouchableOpacity style={styles.Buttons.secondary} onPress={handleMenuWithSound}>
+            <Text style={styles.Typography.button}>←</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.Buttons.primary,
               {
                 minWidth: 200,
-                backgroundColor: styles.Colors.secondary
+                backgroundColor: styles.Colors.primary,
+                flexGrow: 1
               }
             ]}
             onPress={handleOpenModal}
           >
-            <Text style={styles.Typography.button}>{getCurrentModeLabel()}</Text>
+            <Text style={[styles.Typography.button, { fontWeight: 'bold' }]}>{getCurrentModeLabel()}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.Buttons.secondary} onPress={handleRestartWithSound}>
+            <Text style={styles.Typography.button}>↺</Text>
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Основные кнопки управления */}
-      <View style={{ flexDirection: 'row', gap: 15 }}>
-        <TouchableOpacity style={styles.Buttons.primary} onPress={handleRestartWithSound}>
-          <Text style={styles.Typography.button}>Заново</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.Buttons.primary} onPress={handleMenuWithSound}>
-          <Text style={styles.Typography.button}>В меню</Text>
-        </TouchableOpacity>
-      </View>
 
       {/* Модальное окно выбора режима */}
       <Modal
@@ -113,21 +110,19 @@ const GameControls: React.FC<GameControlsProps> = ({
           backgroundColor: 'rgba(0,0,0,0.5)'
         }}>
           <View style={{
-            backgroundColor: styles.Colors.surface,
-            borderRadius: 15,
-            padding: 20,
-            margin: 20,
-            maxHeight: '80%',
-            minWidth: 300
+            backgroundColor: styles.Colors.background,
+            borderRadius: 20,
+            padding: 15,
+            minWidth: 350
           }}>
             <Text style={[
               styles.Typography.subtitle,
-              { marginBottom: 20, textAlign: 'center' }
+              { marginBottom: 40, textAlign: 'center' }
             ]}>
-              Выберите режим игры
+              Режим игры
             </Text>
 
-            <ScrollView style={{ maxHeight: 400 }}>
+            <View style={{ backgroundColor: styles.Colors.surface, flexDirection: 'column', borderRadius: 20, padding: 5 }}>
               {gameModes.map((mode) => {
                 // Для режима time_attack показываем лимит времени текущего размера поля
                 let timeInfo = '';
@@ -148,8 +143,9 @@ const GameControls: React.FC<GameControlsProps> = ({
                       {
                         backgroundColor: gameMode === mode.value
                           ? styles.Colors.primary
-                          : styles.Colors.surface,
-                        marginVertical: 5,
+                          : 'transparment',
+                        borderRadius: 15,
+                        marginBottom: 0,
                       }
                     ]}
                     onPress={() => handleModeSelect(mode.value)}
@@ -165,47 +161,47 @@ const GameControls: React.FC<GameControlsProps> = ({
                     ]}>
                       {mode.label}
                     </Text>
-                    <Text style={[
-                      styles.Typography.caption,
-                      {
-                        marginTop: 5,
-                        color: gameMode === mode.value
-                          ? styles.Colors.textLight
-                          : styles.Colors.textPrimary
-                      }
-                    ]}>
-                      {mode.description}
-                    </Text>
-                    {timeInfo && (
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 5,}}>
                       <Text style={[
                         styles.Typography.caption,
                         {
-                          marginTop: 2,
-                          fontStyle: 'italic',
-                          fontWeight: 'bold',
                           color: gameMode === mode.value
                             ? styles.Colors.textLight
-                            : styles.Colors.accent
+                            : styles.Colors.textPrimary
                         }
                       ]}>
-                        ⏱️ {timeInfo}
+                        {mode.description}
                       </Text>
-                    )}
+                      {timeInfo && (
+                        <Text style={[
+                          styles.Typography.caption,
+                          {
+                            // fontStyle: 'italic',
+                            // fontWeight: 'bold',
+                            color: gameMode === mode.value
+                              ? styles.Colors.textLight
+                              : styles.Colors.textPrimary
+                          }
+                        ]}>
+                          {timeInfo}
+                        </Text>
+                      )}
+                    </View>
                   </TouchableOpacity>
                 );
               })}
-            </ScrollView>
+            </View>
 
             <TouchableOpacity
               style={[
-                styles.Buttons.outline,
-                { marginTop: 15 }
+                styles.Buttons.primary,
+                { marginTop: 30 }
               ]}
               onPress={handleCloseModal}
             >
               <Text style={[
                 styles.Typography.button,
-                { color: styles.Colors.primary }
+                { fontWeight: 'bold' }
               ]}>
                 Отмена
               </Text>
