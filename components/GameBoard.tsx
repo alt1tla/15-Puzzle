@@ -9,13 +9,23 @@ type GameBoardProps = {
   board: number[];
   columns: number;
   onCellPress: (index: number) => void;
+  imagePieces?: string[];
 };
 
-const GameBoard: React.FC<GameBoardProps> = ({ board, columns, onCellPress }) => {
-  const { theme } = useGameSettings();
+const GameBoard: React.FC<GameBoardProps> = ({ board, columns, onCellPress, imagePieces }) => {
+  const { theme, gameMode, imagePuzzleData } = useGameSettings();
   const styles = createStyles(theme);
-  
+
   const cellSize = Utils.getCellSize(columns);
+  const isImageMode = gameMode === 'image';
+
+  console.log('GameBoard render:', {
+    isImageMode,
+    imagePiecesCount: imagePieces?.length,
+    boardLength: board.length,
+    imagePuzzleData: imagePuzzleData ? 'exists' : 'null'
+  });
+
 
   return (
     <View style={[
@@ -23,19 +33,27 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, columns, onCellPress }) =>
       {
         width: Utils.maxBoardSize,
         height: Utils.maxBoardSize,
-        flexWrap: 'wrap' as 'wrap',
-        flexDirection: 'row' as 'row'
+        flexWrap: 'wrap',
+        flexDirection: 'row'
       }
     ]}>
-      {board.map((cell, index) => (
-        <GameCell
-          key={index}
-          value={cell}
-          index={index}
-          cellSize={cellSize}
-          onPress={onCellPress}
-        />
-      ))}
+      {board.map((cell, index) => {
+        const pieceIndex = cell - 1;
+        const imageUri = isImageMode && imagePieces && pieceIndex >= 0 ? imagePieces[pieceIndex] : undefined;
+
+        console.log(`Cell ${index}: value=${cell}, pieceIndex=${pieceIndex}, imageUri=${imageUri ? 'exists' : 'null'}`);
+
+        return (
+          <GameCell
+            key={index}
+            value={cell}
+            index={index}
+            cellSize={cellSize}
+            onPress={onCellPress}
+            imageUri={imageUri}
+          />
+        );
+      })}
     </View>
   );
 };

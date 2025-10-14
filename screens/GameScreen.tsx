@@ -20,7 +20,7 @@ type Props = {
 };
 
 const GameScreen = ({ navigation, route }: Props) => {
-  const { theme, gameMode, addScore, boardSize, getTimeLimit } = useGameSettings();
+  const { theme, gameMode, addScore, boardSize, getTimeLimit, imagePuzzleData } = useGameSettings();
   const styles = createStyles(theme);
   const {
     playMoveSound,
@@ -124,20 +124,24 @@ const GameScreen = ({ navigation, route }: Props) => {
       initialBoard = createTestBoard(tails);
     } else {
       initialBoard = createInitialBoard(tails);
+
       initialBoard = shuffleBoard(initialBoard, rows, columns);
     }
+
     setBoard(initialBoard);
     setMoves(0);
     setTime(0);
     setIsGameActive(true);
-    setIsTimerRunning(false); // Таймер не запускается автоматически
-    setShowModeModal(false); // Закрываем модальное окно при перезапуске
+    setIsTimerRunning(false);
+    setShowModeModal(false);
+
+    console.log('Игра инициализирована, режим:', gameMode, 'доска перемешана');
   };
 
   // Эффект для инициализации игры при изменении параметров
   useEffect(() => {
     initGame();
-  }, [tails, rows, columns, testMode]);
+  }, [tails, rows, columns, testMode, gameMode]);
 
   // Эффект для проверки победы
   useEffect(() => {
@@ -258,6 +262,7 @@ const GameScreen = ({ navigation, route }: Props) => {
         board={board}
         columns={columns}
         onCellPress={handleCellPress}
+        imagePieces={imagePuzzleData?.pieces}
       />
 
       <GameControls
