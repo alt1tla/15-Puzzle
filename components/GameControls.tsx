@@ -5,6 +5,7 @@ import { useGameSettings, gameModes, GameMode, boardSizes } from '../contexts/Ga
 import { createStyles } from '../styles/GlobalStyles';
 import { useGameSounds } from '../hooks/useGameSound';
 import { ImageService } from '../services/ImageService';
+import { VibrationService } from '../services/VibrationService';
 
 type GameControlsProps = {
   onRestart: () => void;
@@ -34,6 +35,7 @@ const GameControls: React.FC<GameControlsProps> = ({
 
   const handleModeSelect = async (selectedMode: GameMode) => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     if (selectedMode === 'image') {
       await handleImageModeSelect();
     } else {
@@ -91,6 +93,7 @@ const GameControls: React.FC<GameControlsProps> = ({
 
   const handleOpenModal = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     if (onOpenModeModal) {
       onOpenModeModal();
     } else {
@@ -100,6 +103,7 @@ const GameControls: React.FC<GameControlsProps> = ({
 
   const handleCloseModal = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     if (onCloseModeModal) {
       onCloseModeModal();
     } else {
@@ -109,11 +113,13 @@ const GameControls: React.FC<GameControlsProps> = ({
 
   const handleRestartWithSound = async () => {
     await playButtonSound();
+    VibrationService.playErrorVibration()
     onRestart();
   };
 
   const handleMenuWithSound = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     onMenu();
   };
 

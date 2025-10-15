@@ -13,6 +13,7 @@ import {
   shuffleBoard,
   isSolved
 } from '../utils/gameLogic';
+import { VibrationService } from '../services/VibrationService';
 
 type Props = {
   navigation: any;
@@ -97,6 +98,7 @@ const GameScreen = ({ navigation, route }: Props) => {
 
     const minutes = Math.floor(timeLimit / 60);
     const seconds = timeLimit % 60;
+    VibrationService.playErrorVibration()
     Alert.alert(
       'Время вышло!',
       `Лимит времени (${minutes}:${seconds.toString().padStart(2, '0')}) истек. Сделано ходов: ${moves}`,
@@ -109,11 +111,13 @@ const GameScreen = ({ navigation, route }: Props) => {
 
   const handleRestart = async () => {
     await playButtonSound();
+    VibrationService.playErrorVibration()
     initGame();
   };
 
   const handleMenu = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     navigation.goBack();
   };
 
@@ -151,6 +155,7 @@ const GameScreen = ({ navigation, route }: Props) => {
 
       // Воспроизводим звук победы
       playWinSound();
+      VibrationService.playWinVibration()
 
       // Сохранение результата
       const scoreRecord = {
@@ -179,7 +184,6 @@ const GameScreen = ({ navigation, route }: Props) => {
           message = `Вы собрали головоломку за ${timeString} и ${moves} ходов!\nОсталось времени: ${minutesLeft}:${secondsLeft.toString().padStart(2, '0')}`;
         }
       }
-
       Alert.alert('Победа!', message, [
         { text: 'На главную', onPress: () => navigation.goBack() },
         { text: 'Играть еще', onPress: initGame }
@@ -211,8 +215,10 @@ const GameScreen = ({ navigation, route }: Props) => {
       setBoard(newBoard);
       setMoves(moves + 1);
       await playMoveSound(); // Звук перемещения
+      VibrationService.playMoveVibration()
     } else {
       await playCantMoveSound(); // Звук невозможности перемещения
+      VibrationService.playErrorVibration()
     }
   };
 

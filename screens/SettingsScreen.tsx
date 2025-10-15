@@ -5,6 +5,7 @@ import { useGameSettings, boardSizes } from '../contexts/GameSettingsContext';
 import { useAudioSettings } from '../contexts/AudioSettingsContext';
 import { createStyles } from '../styles/GlobalStyles';
 import { useGameSounds } from '../hooks/useGameSound';
+import { VibrationService } from '../services/VibrationService';
 
 type Props = {
   navigation: any;
@@ -35,6 +36,7 @@ const SettingsScreen = ({ navigation }: Props) => {
   // Обработчик переключения размера поля вперед
   const handleNextBoardSize = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     const nextIndex = (currentBoardSizeIndex + 1) % boardSizes.length;
     setBoardSize(boardSizes[nextIndex]);
   };
@@ -42,6 +44,7 @@ const SettingsScreen = ({ navigation }: Props) => {
   // Обработчик переключения размера поля назад
   const handlePrevBoardSize = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     const prevIndex = currentBoardSizeIndex === 0
       ? boardSizes.length - 1
       : currentBoardSizeIndex - 1;
@@ -51,12 +54,14 @@ const SettingsScreen = ({ navigation }: Props) => {
   // Обработчик выбора темы
   const handleThemeSelect = async (selectedTheme: 'light' | 'dark' | 'chinese') => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     setTheme(selectedTheme);
   };
 
   // Обработчик сохранения и возврата
   const handleSave = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     navigation.goBack();
   };
 
@@ -75,12 +80,14 @@ const SettingsScreen = ({ navigation }: Props) => {
   // Обработчик изменения громкости музыки
   const handleMusicVolumeChange = async (volume: number) => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     setMusicVolume(volume);
   };
 
   // Обработчик изменения громкости эффектов
   const handleEffectsVolumeChange = async (volume: number) => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     setEffectsVolume(volume);
   };
 
@@ -437,7 +444,7 @@ const SettingsScreen = ({ navigation }: Props) => {
           ]}
           onPress={handleSave}
         >
-          <Text style={[styles.Typography.button, {fontWeight: 'bold'}]}>Сохранить</Text>
+          <Text style={[styles.Typography.button, { fontWeight: 'bold' }]}>Сохранить</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

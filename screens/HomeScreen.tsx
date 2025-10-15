@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, Platform, StatusBar } from 'react-native'
 import { useGameSettings, gameModes } from '../contexts/GameSettingsContext';
 import { createStyles } from '../styles/GlobalStyles';
 import { useGameSounds } from '../hooks/useGameSound';
+import { VibrationService } from '../services/VibrationService';
 
 type Props = {
   navigation: any;
@@ -23,16 +24,19 @@ const HomeScreen = ({ navigation }: Props) => {
 
   const handlePlay = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     navigation.navigate('Game', boardSize);
   };
 
   const handleLeaderboard = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     navigation.navigate('Leaderboard');
   };
 
   const handleSettings = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     navigation.navigate('Settings');
   };
 
