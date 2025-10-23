@@ -1,6 +1,7 @@
 // contexts/GameSettingsContext.tsx
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { StorageService, AppSettings } from '../services/StorageService';
+import { ImageService } from '../services/ImageService';
 
 // Тип для настроек размера поля
 export type BoardSizeSettings = {
@@ -45,6 +46,7 @@ type GameSettingsContextType = {
   getTimeLimit: () => number;
   imagePuzzleData: ImagePuzzleData | null;
   setImagePuzzleData: (data: ImagePuzzleData | null) => void;
+  updateImageForCurrentBoardSize: () => Promise<void>;
 };
 
 // Варианты размеров поля с индивидуальными временными лимитами для time_attack
@@ -125,9 +127,9 @@ const GameSettingsContext = createContext<GameSettingsContextType | undefined>(u
 
 // Добавляем тип для хранения данных изображения
 export type ImagePuzzleData = {
-  uri: string;
-  pieces: string[]; // base64 или URI кусочков
-  originalSize: { width: number; height: number };
+  originalUri: string;
+  pieces: string[];
+  currentBoardSize: string;
 };
 
 // Вспомогательная функция для получения BoardSizeSettings с timeLimit
@@ -183,6 +185,36 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
       return updatedScores;
     });
   };
+
+  const updateImageForCurrentBoardSize = async (): Promise<void> => {
+    if (imagePuzzleData && imagePuzzleData.originalUri) {
+      try {
+        console.log(`Обновляем изображение для размера ${boardSize.rows}x${boardSize.columns}`);
+
+        const pieces = await ImageService.quickSliceImage(
+          imagePuzzleData.originalUri,
+          boardSize.rows,
+          boardSize.columns
+        );
+
+        if (pieces.length === boardSize.rows * boardSize.columns) {
+          setImagePuzzleData({
+            originalUri: imagePuzzleData.originalUri,
+            pieces,
+            currentBoardSize: boardSize.label
+          });
+          console.log(`Изображение успешно обновлено для ${boardSize.label}`);
+        } else {
+          console.error('Не удалось обновить изображение');
+          // Если не удалось обновить, очищаем данные изображения
+          setImagePuzzleData(null);
+        }
+      } catch (error) {
+        console.error('Ошибка обновления изображения:', error);
+        setImagePuzzleData(null);
+      }
+    }
+  }
 
   // Обертки для set-функций с автоматическим сохранением
   const setBoardSizeAndSave = (newBoardSize: BoardSizeSettings) => {
@@ -275,6 +307,7 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
       loadSettings,
       getTimeLimit,
       imagePuzzleData,
+      updateImageForCurrentBoardSize,
       setImagePuzzleData: setImagePuzzleDataAndSave,
     }}>
       {children}

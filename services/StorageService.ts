@@ -17,9 +17,9 @@ export interface AppSettings {
   gameMode: "classic" | "timed" | "time_attack" | "image";
   scores: ScoreRecord[];
   imagePuzzleData?: {
-    uri: string;
+    originalUri: string;
     pieces: string[];
-    originalSize: { width: number; height: number };
+    currentBoardSize: string;
   } | null;
 }
 

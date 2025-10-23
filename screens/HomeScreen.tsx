@@ -17,7 +17,7 @@ const themeOptions = [
 ];
 
 const HomeScreen = ({ navigation }: Props) => {
-  const { boardSize, theme, playerName, gameMode } = useGameSettings();
+  const { boardSize, theme, playerName, gameMode, imagePuzzleData, updateImageForCurrentBoardSize } = useGameSettings();
   const styles = createStyles(theme);
   const { playButtonSound } = useGameSounds();
 
@@ -25,6 +25,11 @@ const HomeScreen = ({ navigation }: Props) => {
   const handlePlay = async () => {
     await playButtonSound();
     VibrationService.playButtonPressVibration()
+    if (gameMode === 'image' &&
+      imagePuzzleData &&
+      imagePuzzleData.currentBoardSize !== boardSize.label) {
+      await updateImageForCurrentBoardSize();
+    }
     navigation.navigate('Game', boardSize);
   };
 

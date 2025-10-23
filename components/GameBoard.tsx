@@ -23,7 +23,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, columns, onCellPress, imag
     isImageMode,
     imagePiecesCount: imagePieces?.length,
     boardLength: board.length,
-    imagePuzzleData: imagePuzzleData ? 'exists' : 'null'
+    imagePuzzleData: imagePuzzleData ? {
+      currentBoardSize: imagePuzzleData.currentBoardSize,
+      piecesCount: imagePuzzleData.pieces.length,
+      firstPiece: imagePuzzleData.pieces[0]?.substring(0, 50) + '...'
+    } : 'null'
   });
 
 
@@ -39,9 +43,15 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, columns, onCellPress, imag
     ]}>
       {board.map((cell, index) => {
         const pieceIndex = cell - 1;
-        const imageUri = isImageMode && imagePieces && pieceIndex >= 0 ? imagePieces[pieceIndex] : undefined;
+        const imageUri = isImageMode &&
+          imagePieces &&
+          cell !== 0 &&
+          pieceIndex >= 0 &&
+          pieceIndex < imagePieces.length
+          ? imagePieces[pieceIndex]
+          : undefined;
 
-        console.log(`Cell ${index}: value=${cell}, pieceIndex=${pieceIndex}, imageUri=${imageUri ? 'exists' : 'null'}`);
+        console.log(`Cell ${index}: value=${cell}, pieceIndex=${pieceIndex}, imageUri=${imageUri ? imageUri.substring(0, 30) + '...' : 'null'}`);
 
         return (
           <GameCell

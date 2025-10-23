@@ -12,7 +12,7 @@ type Props = {
 };
 
 const SettingsScreen = ({ navigation }: Props) => {
-  const { boardSize, setBoardSize, theme, setTheme, playerName } = useGameSettings();
+  const { boardSize, setBoardSize, theme, setTheme, playerName, } = useGameSettings();
   const styles = createStyles(theme);
   const { playButtonSound } = useGameSounds();
 

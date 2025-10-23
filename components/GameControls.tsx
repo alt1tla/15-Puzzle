@@ -56,20 +56,20 @@ const GameControls: React.FC<GameControlsProps> = ({
 
         // Используем быструю версию для тестирования
         const pieces = await ImageService.quickSliceImage(
-          imageUri,
-          boardSize.rows,
-          boardSize.columns
-        );
+        imageUri, 
+        boardSize.rows, 
+        boardSize.columns
+      );
 
         console.log(`Обработано кусочков: ${pieces.length}, нужно: ${boardSize.rows * boardSize.columns}`);
 
         if (pieces.length === boardSize.rows * boardSize.columns) {
           // Сохраняем данные изображения
           setImagePuzzleData({
-            uri: imageUri,
-            pieces,
-            originalSize: { width: 400, height: 400 }
-          });
+          originalUri: imageUri,
+          pieces,
+          currentBoardSize: boardSize.label
+        });
 
           console.log('Изображение успешно обработано, переключаем режим...');
 

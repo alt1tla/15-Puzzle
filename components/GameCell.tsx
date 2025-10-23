@@ -1,4 +1,3 @@
-// components/GameCell.tsx
 import React from 'react';
 import { TouchableOpacity, Text, Image } from 'react-native';
 import { useGameSettings } from '../contexts/GameSettingsContext';
@@ -18,8 +17,10 @@ const GameCell: React.FC<GameCellProps> = ({ value, index, cellSize, onPress, im
 
   const isEmpty = value === 0;
   const isImageMode = gameMode === 'image';
+  const shouldShowImage = isImageMode && imageUri && !isEmpty;
 
-  console.log(`GameCell ${index}: value=${value}, isImageMode=${isImageMode}, imageUri=${imageUri ? 'exists' : 'null'}`);
+  console.log(`GameCell ${index}: value=${value}, shouldShowImage=${shouldShowImage}`);
+
 
   return (
     <TouchableOpacity
@@ -31,6 +32,7 @@ const GameCell: React.FC<GameCellProps> = ({ value, index, cellSize, onPress, im
           height: cellSize,
           margin: 2.5,
           overflow: 'hidden',
+          backgroundColor: isEmpty ? 'transparent' : styles.GameStyles.cell.backgroundColor,
         }
       ]}
       onPress={() => onPress(index)}
@@ -46,6 +48,8 @@ const GameCell: React.FC<GameCellProps> = ({ value, index, cellSize, onPress, im
               borderRadius: 8
             }}
             resizeMode="cover"
+            onError={(error) => console.log('❌ Ошибка загрузки изображения:', error.nativeEvent.error)}
+            onLoad={() => console.log('✅ Изображение загружено для клетки', index)}
           />
         ) : (
           <Text style={styles.GameStyles.cellText}>{value}</Text>
