@@ -1,6 +1,7 @@
 // services/ImageService.ts
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'react-native';
 
 export class ImageService {
   // Запрос разрешений и выбор изображения
@@ -31,33 +32,80 @@ export class ImageService {
     }
   }
 
-  // Быстрая версия - без ресайза кусочков (для тестирования)
-  static async quickSliceImage(uri: string, rows: number, columns: number): Promise<string[]> {
+  static async getImageSize(uri: string): Promise<{ width: number, height: number }> {
+    return new Promise((resolve, reject) => {
+      Image.getSize(
+        uri,
+        (width, height) => resolve({ width, height }),
+        (error) => reject(error)
+      );
+    });
+  }
+
+  static async cropToSquare(uri: string): Promise<string | null> {
     try {
-      console.log(`Быстрая нарезка изображения для ${rows}x${columns}`);
-      const pieces: string[] = [];
+      console.log('Начинаем умную обрезку до квадрата...');
 
-      // Увеличиваем размер для лучшего качества
-      const outputSize = Math.max(600, rows * 200);
+      // Получаем размеры исходного изображения
+      const { width, height } = await this.getImageSize(uri);
+      console.log(`Размеры исходного изображения: ${width}x${height}`);
 
-      console.log('Подготавливаем изображение...');
-      const preparedImage = await manipulateAsync(
+      // Определяем размер квадрата (меньшая из сторон)
+      const squareSize = Math.min(width, height);
+
+      // Вычисляем координаты для обрезки из центра
+      const cropX = (width - squareSize) / 2;
+      const cropY = (height - squareSize) / 2;
+
+      console.log(`Обрезаем до квадрата ${squareSize}x${squareSize} из координат (${cropX}, ${cropY})`);
+
+      // Обрезаем изображение до квадрата из центра
+      const croppedImage = await manipulateAsync(
         uri,
         [
           {
             crop: {
-              originX: 0,
-              originY: 0,
-              width: 1,
-              height: 1
+              originX: cropX,
+              originY: cropY,
+              width: squareSize,
+              height: squareSize
             }
-          },
-          { resize: { width: outputSize, height: outputSize } }
+          }
         ],
         { compress: 0.9, format: SaveFormat.JPEG }
       );
 
-      console.log(`Изображение подготовлено (${outputSize}x${outputSize}), начинаем нарезку...`);
+      console.log('Умная обрезка завершена');
+      return croppedImage.uri;
+    } catch (error) {
+      console.error('Ошибка умной обрезки:', error);
+      return null;
+    }
+  }
+
+  // Быстрая версия - без ресайза кусочков (для тестирования)
+  static async quickSliceImage(uri: string, rows: number, columns: number): Promise<string[]> {
+    try {
+      const pieces: string[] = [];
+
+      console.log('Обрезаем изображение до квадрата...');
+      const squareUri = await this.cropToSquare(uri);
+
+      if (!squareUri) {
+        throw new Error('Не удалось обрезать изображение до квадрата');
+      }
+
+      // Оптимальный размер для качества
+      const outputSize = Math.max(600, rows * 200);
+
+      // Просто ресайзим изображение и нарезаем
+      const preparedImage = await manipulateAsync(
+        squareUri,
+        [
+          { resize: { width: outputSize, height: outputSize } }
+        ],
+        { compress: 0.9, format: SaveFormat.JPEG }
+      );
 
       const pieceSize = outputSize / columns;
 
@@ -74,17 +122,14 @@ export class ImageService {
                   height: pieceSize
                 }
               }
-              // УБИРАЕМ повторный ресайз - он портит качество
             ],
             { compress: 0.8, format: SaveFormat.JPEG }
           );
 
           pieces.push(piece.uri);
-          console.log(`Создан кусочек ${row}-${col}`);
         }
       }
 
-      console.log(`Успешно создано ${pieces.length} кусочков`);
       return pieces;
     } catch (error) {
       console.error('Ошибка быстрой нарезки:', error);
