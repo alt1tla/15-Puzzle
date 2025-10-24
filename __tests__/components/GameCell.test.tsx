@@ -1,10 +1,10 @@
 // Модульное тестирование
-describe('GameCell Logic', () => {
-  test('empty cell has value 0', () => {
+describe('Модульное тестирование', () => {
+  test('У пустой плитки значение 0', () => {
     expect(0).toBe(0); 
   });
 
-  test('non-empty cell shows number', () => {
+  test('Непустая плитка имеет соответствующее значение', () => {
     expect(5).toBe(5); 
   });
 });

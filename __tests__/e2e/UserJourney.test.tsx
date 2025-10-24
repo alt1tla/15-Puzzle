@@ -1,7 +1,7 @@
 // Фукнциональное тестирование
-describe('User Journey Scenarios', () => {
+describe('Функциональное тестирование', () => {
   describe('Complete Game Session', () => {
-    it('user can complete a full game session', () => {
+    it('Пользователь может пройти полный круг игры', () => {
       let currentScreen = 'Home';
       expect(currentScreen).toBe('Home');
       
@@ -24,7 +24,7 @@ describe('User Journey Scenarios', () => {
   });
 
   describe('Settings Management', () => {
-    it('user can change app settings', () => {
+    it('Пользователь может изменять настройки', () => {
       let theme = 'light';
       let boardSize = '4x4';
       let playerName = 'Игрок';
@@ -44,7 +44,7 @@ describe('User Journey Scenarios', () => {
   });
 
   describe('Image Mode Flow', () => {
-    it('user can use image mode', () => {
+    it('Пользователь может использовать режим с изображением', () => {
       let gameMode = 'classic';
       gameMode = 'image';
       expect(gameMode).toBe('image');
