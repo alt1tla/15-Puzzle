@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1761293778320" clover="3.2.0">
+  <project timestamp="1761293778321" name="All files">
+    <metrics statements="50" coveredstatements="34" conditionals="10" coveredconditionals="5" methods="8" coveredmethods="8" elements="68" coveredelements="47" complexity="0" loc="50" ncloc="50" packages="1" files="1" classes="1"/>
+    <file name="gameLogic.ts" path="C:\Users\motte\OneDrive\Desktop\УБАЧЕ\5 семестр\Мобильные приложения\15 puzzle\utils\gameLogic.ts">
+      <metrics statements="50" coveredstatements="34" conditionals="10" coveredconditionals="5" methods="8" coveredmethods="8"/>
+      <line num="4" count="1" type="stmt"/>
+      <line num="5" count="78" type="stmt"/>
+      <line num="9" count="1" type="stmt"/>
+      <line num="10" count="1" type="stmt"/>
+      <line num="11" count="1" type="cond" truecount="1" falsecount="0"/>
+      <line num="12" count="1" type="stmt"/>
+      <line num="13" count="1" type="stmt"/>
+      <line num="14" count="1" type="stmt"/>
+      <line num="16" count="0" type="stmt"/>
+      <line num="20" count="1" type="stmt"/>
+      <line num="21" count="5" type="stmt"/>
+      <line num="22" count="59" type="stmt"/>
+      <line num="24" count="5" type="stmt"/>
+      <line num="25" count="54" type="stmt"/>
+      <line num="26" count="294" type="cond" truecount="1" falsecount="0"/>
+      <line num="30" count="5" type="cond" truecount="2" falsecount="0"/>
+      <line num="31" count="3" type="stmt"/>
+      <line num="33" count="2" type="stmt"/>
+      <line num="34" count="2" type="stmt"/>
+      <line num="39" count="1" type="stmt"/>
+      <line num="41" count="2" type="stmt"/>
+      <line num="42" count="2" type="stmt"/>
+      <line num="44" count="2" type="stmt"/>
+      <line num="45" count="2" type="stmt"/>
+      <line num="46" count="2" type="stmt"/>
+      <line num="47" count="23" type="stmt"/>
+      <line num="48" count="23" type="stmt"/>
+      <line num="50" count="2" type="stmt"/>
+      <line num="52" count="2" type="cond" truecount="0" falsecount="1"/>
+      <line num="53" count="0" type="stmt"/>
+      <line num="54" count="0" type="stmt"/>
+      <line num="55" count="0" type="stmt"/>
+      <line num="57" count="0" type="stmt"/>
+      <line num="58" count="0" type="stmt"/>
+      <line num="60" count="0" type="cond" truecount="0" falsecount="1"/>
+      <line num="61" count="0" type="cond" truecount="0" falsecount="1"/>
+      <line num="62" count="0" type="cond" truecount="0" falsecount="1"/>
+      <line num="63" count="0" type="cond" truecount="0" falsecount="1"/>
+      <line num="65" count="0" type="stmt"/>
+      <line num="66" count="0" type="stmt"/>
+      <line num="67" count="0" type="stmt"/>
+      <line num="68" count="0" type="stmt"/>
+      <line num="69" count="0" type="stmt"/>
+      <line num="71" count="0" type="stmt"/>
+      <line num="75" count="2" type="stmt"/>
+      <line num="79" count="1" type="stmt"/>
+      <line num="80" count="3" type="stmt"/>
+      <line num="81" count="25" type="cond" truecount="1" falsecount="0"/>
+      <line num="82" count="2" type="stmt"/>
+      <line num="84" count="23" type="stmt"/>
+    </file>
+  </project>
+</coverage>

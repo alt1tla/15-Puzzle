@@ -1,5 +1,6 @@
 // services/StorageService.ts
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ImagePuzzleData } from "../contexts/GameSettingsContext";
 
 // Типы для данных приложения
 export interface AppSettings {
@@ -11,16 +12,21 @@ export interface AppSettings {
     testMode?: boolean;
     timeLimit: number; // Теперь обязательное поле
   };
-  theme: "light" | "dark" | "retro";
+  theme: "light" | "dark" | "chinese";
   playerName: string;
-  gameMode: "classic" | "timed" | "time_attack";
+  gameMode: "classic" | "timed" | "time_attack" | "image";
   scores: ScoreRecord[];
+  imagePuzzleData?: {
+    originalUri: string;
+    pieces: string[];
+    currentBoardSize: string;
+  } | null;
 }
 
 export interface ScoreRecord {
   playerName: string;
   boardSize: string; // Изменено с difficulty на boardSize
-  mode: "classic" | "timed" | "time_attack";
+  mode: "classic" | "timed" | "time_attack" | "image";
   score: number;
   date: string;
   moves?: number;
@@ -72,6 +78,7 @@ export const StorageService = {
           playerName: settings.playerName || "Игрок",
           gameMode: settings.gameMode || "classic",
           scores: settings.scores || [],
+          imagePuzzleData: settings.imagePuzzleData || null,
         };
       }
       console.log("Настройки не найдены, используются значения по умолчанию");

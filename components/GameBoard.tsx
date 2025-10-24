@@ -9,13 +9,27 @@ type GameBoardProps = {
   board: number[];
   columns: number;
   onCellPress: (index: number) => void;
+  imagePieces?: string[];
 };
 
-const GameBoard: React.FC<GameBoardProps> = ({ board, columns, onCellPress }) => {
-  const { theme } = useGameSettings();
+const GameBoard: React.FC<GameBoardProps> = ({ board, columns, onCellPress, imagePieces }) => {
+  const { theme, gameMode, imagePuzzleData } = useGameSettings();
   const styles = createStyles(theme);
-  
+
   const cellSize = Utils.getCellSize(columns);
+  const isImageMode = gameMode === 'image';
+
+  console.log('GameBoard render:', {
+    isImageMode,
+    imagePiecesCount: imagePieces?.length,
+    boardLength: board.length,
+    imagePuzzleData: imagePuzzleData ? {
+      currentBoardSize: imagePuzzleData.currentBoardSize,
+      piecesCount: imagePuzzleData.pieces.length,
+      firstPiece: imagePuzzleData.pieces[0]?.substring(0, 50) + '...'
+    } : 'null'
+  });
+
 
   return (
     <View style={[
@@ -23,19 +37,33 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, columns, onCellPress }) =>
       {
         width: Utils.maxBoardSize,
         height: Utils.maxBoardSize,
-        flexWrap: 'wrap' as 'wrap',
-        flexDirection: 'row' as 'row'
+        flexWrap: 'wrap',
+        flexDirection: 'row'
       }
     ]}>
-      {board.map((cell, index) => (
-        <GameCell
-          key={index}
-          value={cell}
-          index={index}
-          cellSize={cellSize}
-          onPress={onCellPress}
-        />
-      ))}
+      {board.map((cell, index) => {
+        const pieceIndex = cell - 1;
+        const imageUri = isImageMode &&
+          imagePieces &&
+          cell !== 0 &&
+          pieceIndex >= 0 &&
+          pieceIndex < imagePieces.length
+          ? imagePieces[pieceIndex]
+          : undefined;
+
+        console.log(`Cell ${index}: value=${cell}, pieceIndex=${pieceIndex}, imageUri=${imageUri ? imageUri.substring(0, 30) + '...' : 'null'}`);
+
+        return (
+          <GameCell
+            key={index}
+            value={cell}
+            index={index}
+            cellSize={cellSize}
+            onPress={onCellPress}
+            imageUri={imageUri}
+          />
+        );
+      })}
     </View>
   );
 };

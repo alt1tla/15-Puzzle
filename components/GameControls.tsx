@@ -1,9 +1,11 @@
 // components/GameControls.tsx
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, Modal, ScrollView } from 'react-native';
+import { View, TouchableOpacity, Text, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import { useGameSettings, gameModes, GameMode, boardSizes } from '../contexts/GameSettingsContext';
 import { createStyles } from '../styles/GlobalStyles';
 import { useGameSounds } from '../hooks/useGameSound';
+import { ImageService } from '../services/ImageService';
+import { VibrationService } from '../services/VibrationService';
 
 type GameControlsProps = {
   onRestart: () => void;
@@ -20,24 +22,78 @@ const GameControls: React.FC<GameControlsProps> = ({
   showModeSelector = false,
   onOpenModeModal,
   onCloseModeModal,
-  showModeModal = false
+  showModeModal = false,
 }) => {
-  const { theme, gameMode, setGameMode, boardSize } = useGameSettings();
+  const { theme, gameMode, setGameMode, boardSize, setImagePuzzleData } = useGameSettings();
   const styles = createStyles(theme);
   const { playButtonSound } = useGameSounds();
   const [internalShowModeModal, setInternalShowModeModal] = useState(false);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
 
   // Используем переданное состояние или внутреннее состояние
   const modalVisible = showModeModal !== undefined ? showModeModal : internalShowModeModal;
 
   const handleModeSelect = async (selectedMode: GameMode) => {
     await playButtonSound();
-    setGameMode(selectedMode);
-    handleCloseModal();
+    VibrationService.playButtonPressVibration()
+    if (selectedMode === 'image') {
+      await handleImageModeSelect();
+    } else {
+      setGameMode(selectedMode);
+      handleCloseModal();
+    }
+  };
+
+  const handleImageModeSelect = async () => {
+    setIsLoadingImage(true);
+
+    try {
+      console.log('Открываем выбор изображения...');
+      const imageUri = await ImageService.pickImage();
+
+      if (imageUri) {
+        console.log('Изображение выбрано, начинаем обработку...');
+
+        // Используем быструю версию для тестирования
+        const pieces = await ImageService.quickSliceImage(
+        imageUri, 
+        boardSize.rows, 
+        boardSize.columns
+      );
+
+        console.log(`Обработано кусочков: ${pieces.length}, нужно: ${boardSize.rows * boardSize.columns}`);
+
+        if (pieces.length === boardSize.rows * boardSize.columns) {
+          // Сохраняем данные изображения
+          setImagePuzzleData({
+          originalUri: imageUri,
+          pieces,
+          currentBoardSize: boardSize.label
+        });
+
+          console.log('Изображение успешно обработано, переключаем режим...');
+
+          // Переключаемся в режим изображения
+          setGameMode('image');
+          handleCloseModal();
+        } else {
+          console.error('Не удалось создать все кусочки изображения');
+          alert('Не удалось обработать изображение. Попробуйте другое изображение.');
+        }
+      } else {
+        console.log('Пользователь отменил выбор изображения');
+      }
+    } catch (error) {
+      console.error('Ошибка обработки изображения:', error);
+      alert('Не удалось обработать изображение. Попробуйте другое.');
+    } finally {
+      setIsLoadingImage(false);
+    }
   };
 
   const handleOpenModal = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     if (onOpenModeModal) {
       onOpenModeModal();
     } else {
@@ -47,6 +103,7 @@ const GameControls: React.FC<GameControlsProps> = ({
 
   const handleCloseModal = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     if (onCloseModeModal) {
       onCloseModeModal();
     } else {
@@ -56,11 +113,13 @@ const GameControls: React.FC<GameControlsProps> = ({
 
   const handleRestartWithSound = async () => {
     await playButtonSound();
+    VibrationService.playErrorVibration()
     onRestart();
   };
 
   const handleMenuWithSound = async () => {
     await playButtonSound();
+    VibrationService.playButtonPressVibration()
     onMenu();
   };
 
@@ -70,34 +129,31 @@ const GameControls: React.FC<GameControlsProps> = ({
   };
 
   return (
-    <View style={{ alignItems: 'center', gap: 15 }}>
+    <View style={{ alignItems: 'center', }}>
       {/* Селектор режима игры (если включен) */}
       {showModeSelector && (
-        <View style={{ alignItems: 'center' }}>
+        <View style={{ alignItems: 'center', flexDirection: 'row', gap: 5, justifyContent: 'space-between', width: '100%' }}>
+          <TouchableOpacity style={styles.Buttons.secondary} onPress={handleMenuWithSound}>
+            <Text style={styles.Typography.button}>←</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.Buttons.primary,
               {
                 minWidth: 200,
-                backgroundColor: styles.Colors.secondary
+                backgroundColor: styles.Colors.primary,
+                flexGrow: 1
               }
             ]}
             onPress={handleOpenModal}
           >
-            <Text style={styles.Typography.button}>{getCurrentModeLabel()}</Text>
+            <Text style={[styles.Typography.button, { fontWeight: 'bold' }]}>{getCurrentModeLabel()}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.Buttons.secondary} onPress={handleRestartWithSound}>
+            <Text style={styles.Typography.button}>↺</Text>
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Основные кнопки управления */}
-      <View style={{ flexDirection: 'row', gap: 15 }}>
-        <TouchableOpacity style={styles.Buttons.primary} onPress={handleRestartWithSound}>
-          <Text style={styles.Typography.button}>Заново</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.Buttons.primary} onPress={handleMenuWithSound}>
-          <Text style={styles.Typography.button}>В меню</Text>
-        </TouchableOpacity>
-      </View>
 
       {/* Модальное окно выбора режима */}
       <Modal
@@ -113,107 +169,114 @@ const GameControls: React.FC<GameControlsProps> = ({
           backgroundColor: 'rgba(0,0,0,0.5)'
         }}>
           <View style={{
-            backgroundColor: styles.Colors.surface,
-            borderRadius: 15,
-            padding: 20,
-            margin: 20,
-            maxHeight: '80%',
-            minWidth: 300
+            backgroundColor: styles.Colors.background,
+            borderRadius: 20,
+            padding: 15,
+            minWidth: 350
           }}>
             <Text style={[
               styles.Typography.subtitle,
-              { marginBottom: 20, textAlign: 'center' }
+              { marginBottom: 40, textAlign: 'center' }
             ]}>
-              Выберите режим игры
+              Режим игры
             </Text>
 
-            <ScrollView style={{ maxHeight: 400 }}>
-              {gameModes.map((mode) => {
-                // Для режима time_attack показываем лимит времени текущего размера поля
-                let timeInfo = '';
-                if (mode.value === 'time_attack') {
-                  const currentBoardSize = boardSizes.find((size: { label: string }) => size.label === boardSize.label);
-                  if (currentBoardSize) {
-                    const minutes = Math.floor(currentBoardSize.timeLimit / 60);
-                    const seconds = currentBoardSize.timeLimit % 60;
-                    timeInfo = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                  }
-                }
+            {isLoadingImage ? (
+              <View style={{ alignItems: 'center', padding: 40 }}>
+                <ActivityIndicator size="large" color={styles.Colors.primary} />
+                <Text style={[styles.Typography.body, { marginTop: 20, textAlign: 'center' }]}>
+                  Загрузка изображения...
+                </Text>
+                <Text style={[styles.Typography.caption, { marginTop: 10, textAlign: 'center' }]}>
+                  Выберите изображение из галереи
+                </Text>
+              </View>
+            ) : (
+              <>
+                <View style={{ backgroundColor: styles.Colors.surface, flexDirection: 'column', borderRadius: 20, padding: 5 }}>
+                  {gameModes.map((mode) => {
+                    // Для режима time_attack показываем лимит времени текущего размера поля
+                    let timeInfo = '';
+                    if (mode.value === 'time_attack') {
+                      const currentBoardSize = boardSizes.find((size: { label: string }) => size.label === boardSize.label);
+                      if (currentBoardSize) {
+                        const minutes = Math.floor(currentBoardSize.timeLimit / 60);
+                        const seconds = currentBoardSize.timeLimit % 60;
+                        timeInfo = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                      }
+                    }
 
-                return (
-                  <TouchableOpacity
-                    key={mode.value}
-                    style={[
-                      styles.Containers.card,
-                      {
-                        backgroundColor: gameMode === mode.value
-                          ? styles.Colors.primary
-                          : styles.Colors.surface,
-                        marginVertical: 5,
-                        borderWidth: 2,
-                        borderColor: gameMode === mode.value
-                          ? styles.Colors.primaryDark
-                          : styles.Colors.border
-                      }
-                    ]}
-                    onPress={() => handleModeSelect(mode.value)}
-                  >
-                    <Text style={[
-                      styles.Typography.body,
-                      {
-                        fontWeight: 'bold',
-                        color: gameMode === mode.value
-                          ? styles.Colors.textLight
-                          : styles.Colors.textPrimary
-                      }
-                    ]}>
-                      {mode.label}
-                    </Text>
-                    <Text style={[
-                      styles.Typography.caption,
-                      {
-                        marginTop: 5,
-                        color: gameMode === mode.value
-                          ? styles.Colors.textLight
-                          : styles.Colors.textSecondary
-                      }
-                    ]}>
-                      {mode.description}
-                    </Text>
-                    {timeInfo && (
-                      <Text style={[
-                        styles.Typography.caption,
-                        {
-                          marginTop: 2,
-                          fontStyle: 'italic',
-                          fontWeight: 'bold',
-                          color: gameMode === mode.value
-                            ? styles.Colors.textLight
-                            : styles.Colors.accent
-                        }
-                      ]}>
-                        ⏱️ {timeInfo}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+                    return (
+                      <TouchableOpacity
+                        key={mode.value}
+                        style={[
+                          styles.Containers.card,
+                          {
+                            backgroundColor: gameMode === mode.value
+                              ? styles.Colors.primary
+                              : 'transparent',
+                            borderRadius: 15,
+                            marginBottom: 0,
+                          }
+                        ]}
+                        onPress={() => handleModeSelect(mode.value)}
+                      >
+                        <Text style={[
+                          styles.Typography.body,
+                          {
+                            fontWeight: 'bold',
+                            color: gameMode === mode.value
+                              ? styles.Colors.textLight
+                              : styles.Colors.textPrimary
+                          }
+                        ]}>
+                          {mode.label}
+                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 5 }}>
+                          <Text style={[
+                            styles.Typography.caption,
+                            {
+                              color: gameMode === mode.value
+                                ? styles.Colors.textLight
+                                : styles.Colors.textPrimary
+                            }
+                          ]}>
+                            {mode.description}
+                          </Text>
+                          {timeInfo && (
+                            <Text style={[
+                              styles.Typography.caption,
+                              {
+                                color: gameMode === mode.value
+                                  ? styles.Colors.textLight
+                                  : styles.Colors.textPrimary
+                              }
+                            ]}>
+                              {timeInfo}
+                            </Text>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
 
-            <TouchableOpacity
-              style={[
-                styles.Buttons.outline,
-                { marginTop: 15 }
-              ]}
-              onPress={handleCloseModal}
-            >
-              <Text style={[
-                styles.Typography.button,
-                { color: styles.Colors.primary }
-              ]}>
-                Отмена
-              </Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.Buttons.primary,
+                    { marginTop: 30 }
+                  ]}
+                  onPress={handleCloseModal}
+                >
+                  <Text style={[
+                    styles.Typography.button,
+                    { fontWeight: 'bold' }
+                  ]}>
+                    Отмена
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       </Modal>

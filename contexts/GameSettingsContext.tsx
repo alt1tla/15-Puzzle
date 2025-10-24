@@ -1,6 +1,7 @@
 // contexts/GameSettingsContext.tsx
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { StorageService, AppSettings } from '../services/StorageService';
+import { ImageService } from '../services/ImageService';
 
 // Тип для настроек размера поля
 export type BoardSizeSettings = {
@@ -13,10 +14,10 @@ export type BoardSizeSettings = {
 };
 
 // Тип для темы приложения
-export type Theme = 'light' | 'dark' | 'retro';
+export type Theme = 'light' | 'dark' | 'chinese';
 
 // Тип: режимы игры
-export type GameMode = 'classic' | 'timed' | 'time_attack';
+export type GameMode = 'classic' | 'timed' | 'time_attack' | 'image';
 
 // Тип: запись в рейтинге
 export interface ScoreRecord {
@@ -43,44 +44,47 @@ type GameSettingsContextType = {
   saveSettings: () => Promise<void>;
   loadSettings: () => Promise<void>;
   getTimeLimit: () => number;
+  imagePuzzleData: ImagePuzzleData | null;
+  setImagePuzzleData: (data: ImagePuzzleData | null) => void;
+  updateImageForCurrentBoardSize: () => Promise<void>;
 };
 
 // Варианты размеров поля с индивидуальными временными лимитами для time_attack
 export const boardSizes: BoardSizeSettings[] = [
-  { 
-    label: '3x3', 
-    tails: 8, 
-    rows: 3, 
-    columns: 3, 
+  {
+    label: '3x3',
+    tails: 8,
+    rows: 3,
+    columns: 3,
     timeLimit: 180 // 3 минуты
   },
-  { 
-    label: '4x4', 
-    tails: 15, 
-    rows: 4, 
-    columns: 4, 
+  {
+    label: '4x4',
+    tails: 15,
+    rows: 4,
+    columns: 4,
     timeLimit: 300 // 5 минут
   },
-  { 
-    label: '5x5', 
-    tails: 24, 
-    rows: 5, 
-    columns: 5, 
+  {
+    label: '5x5',
+    tails: 24,
+    rows: 5,
+    columns: 5,
     timeLimit: 600 // 10 минут
   },
-  { 
-    label: '6x6', 
-    tails: 35, 
-    rows: 6, 
-    columns: 6, 
+  {
+    label: '6x6',
+    tails: 35,
+    rows: 6,
+    columns: 6,
     timeLimit: 900 // 15 минут
   },
-  { 
-    label: 'Тестовый 3x3', 
-    tails: 8, 
-    rows: 3, 
-    columns: 3, 
-    testMode: true, 
+  {
+    label: 'Тест',
+    tails: 8,
+    rows: 3,
+    columns: 3,
+    testMode: true,
     timeLimit: 30 // 30 секунд для тестирования
   }
 ];
@@ -90,17 +94,22 @@ export const gameModes = [
   {
     value: 'classic' as GameMode,
     label: '🏆 Классика',
-    description: 'Собрать за минимальное количество ходов',
+    description: 'За минимальное количество ходов',
   },
   {
     value: 'timed' as GameMode,
     label: '⏱️ С таймером',
-    description: 'Собрать как можно быстрее',
+    description: 'Как можно быстрее',
   },
   {
     value: 'time_attack' as GameMode,
     label: '🚨 На время',
-    description: 'Собрать за ограниченное время',
+    description: 'За ограниченное время',
+  },
+  {
+    value: 'image' as GameMode,
+    label: '🖼️ Изображение',
+    description: 'Пазл из своего фото',
   },
 ];
 
@@ -116,15 +125,22 @@ const defaultSettings: AppSettings = {
 // Создаем контекст
 const GameSettingsContext = createContext<GameSettingsContextType | undefined>(undefined);
 
+// Добавляем тип для хранения данных изображения
+export type ImagePuzzleData = {
+  originalUri: string;
+  pieces: string[];
+  currentBoardSize: string;
+};
+
 // Вспомогательная функция для получения BoardSizeSettings с timeLimit
 const getBoardSizeWithTimeLimit = (boardSize: any): BoardSizeSettings => {
   // Ищем соответствующий размер в boardSizes
   const foundSize = boardSizes.find(size => size.label === boardSize.label);
-  
+
   if (foundSize) {
     return foundSize;
   }
-  
+
   // Если не нашли, создаем с timeLimit по умолчанию
   return {
     ...boardSize,
@@ -139,6 +155,7 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [playerName, setPlayerName] = useState<string>(defaultSettings.playerName);
   const [gameMode, setGameMode] = useState<GameMode>(defaultSettings.gameMode);
   const [scores, setScores] = useState<ScoreRecord[]>(defaultSettings.scores);
+  const [imagePuzzleData, setImagePuzzleData] = useState<ImagePuzzleData | null>(null);
 
   // Функция для получения лимита времени (только для time_attack)
   const getTimeLimit = (): number => {
@@ -169,6 +186,36 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const updateImageForCurrentBoardSize = async (): Promise<void> => {
+    if (imagePuzzleData && imagePuzzleData.originalUri) {
+      try {
+        console.log(`Обновляем изображение для размера ${boardSize.rows}x${boardSize.columns}`);
+
+        const pieces = await ImageService.quickSliceImage(
+          imagePuzzleData.originalUri,
+          boardSize.rows,
+          boardSize.columns
+        );
+
+        if (pieces.length === boardSize.rows * boardSize.columns) {
+          setImagePuzzleData({
+            originalUri: imagePuzzleData.originalUri,
+            pieces,
+            currentBoardSize: boardSize.label
+          });
+          console.log(`Изображение успешно обновлено для ${boardSize.label}`);
+        } else {
+          console.error('Не удалось обновить изображение');
+          // Если не удалось обновить, очищаем данные изображения
+          setImagePuzzleData(null);
+        }
+      } catch (error) {
+        console.error('Ошибка обновления изображения:', error);
+        setImagePuzzleData(null);
+      }
+    }
+  }
+
   // Обертки для set-функций с автоматическим сохранением
   const setBoardSizeAndSave = (newBoardSize: BoardSizeSettings) => {
     setBoardSize(newBoardSize);
@@ -195,6 +242,7 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
         playerName,
         gameMode,
         scores,
+        imagePuzzleData,
       };
       await StorageService.saveSettings(currentSettings);
     } catch (error) {
@@ -209,7 +257,7 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
       if (savedSettings) {
         // Обрабатываем boardSize с обеспечением наличия timeLimit
         let loadedBoardSize: BoardSizeSettings;
-        
+
         if (savedSettings.boardSize) {
           loadedBoardSize = getBoardSizeWithTimeLimit(savedSettings.boardSize);
         } else {
@@ -221,10 +269,16 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
         setPlayerName(savedSettings.playerName || defaultSettings.playerName);
         setGameMode(savedSettings.gameMode || defaultSettings.gameMode);
         setScores(savedSettings.scores || defaultSettings.scores);
+        setImagePuzzleData(savedSettings.imagePuzzleData || null);
       }
     } catch (error) {
       console.error('Ошибка загрузки настроек:', error);
     }
+  };
+
+  // Обертка для сохранения
+  const setImagePuzzleDataAndSave = (data: ImagePuzzleData | null) => {
+    setImagePuzzleData(data);
   };
 
   // Автоматическое сохранение при изменении настроек
@@ -252,6 +306,9 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
       saveSettings,
       loadSettings,
       getTimeLimit,
+      imagePuzzleData,
+      updateImageForCurrentBoardSize,
+      setImagePuzzleData: setImagePuzzleDataAndSave,
     }}>
       {children}
     </GameSettingsContext.Provider>
