@@ -1,4 +1,3 @@
-// services/ImageService.ts
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'react-native';
