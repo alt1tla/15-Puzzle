@@ -138,8 +138,6 @@ const GameScreen = ({ navigation, route }: Props) => {
     setIsGameActive(true);
     setIsTimerRunning(false);
     setShowModeModal(false);
-
-    console.log('Игра инициализирована, режим:', gameMode, 'доска перемешана');
   };
 
   // Эффект для инициализации игры при изменении параметров

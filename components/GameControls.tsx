@@ -48,12 +48,9 @@ const GameControls: React.FC<GameControlsProps> = ({
     setIsLoadingImage(true);
 
     try {
-      console.log('Открываем выбор изображения...');
       const imageUri = await ImageService.pickImage();
 
       if (imageUri) {
-        console.log('Изображение выбрано, начинаем обработку...');
-
         // Используем быструю версию для тестирования
         const pieces = await ImageService.quickSliceImage(
         imageUri, 
@@ -61,7 +58,6 @@ const GameControls: React.FC<GameControlsProps> = ({
         boardSize.columns
       );
 
-        console.log(`Обработано кусочков: ${pieces.length}, нужно: ${boardSize.rows * boardSize.columns}`);
 
         if (pieces.length === boardSize.rows * boardSize.columns) {
           // Сохраняем данные изображения
@@ -71,20 +67,14 @@ const GameControls: React.FC<GameControlsProps> = ({
           currentBoardSize: boardSize.label
         });
 
-          console.log('Изображение успешно обработано, переключаем режим...');
-
           // Переключаемся в режим изображения
           setGameMode('image');
           handleCloseModal();
         } else {
-          console.error('Не удалось создать все кусочки изображения');
           alert('Не удалось обработать изображение. Попробуйте другое изображение.');
         }
-      } else {
-        console.log('Пользователь отменил выбор изображения');
       }
     } catch (error) {
-      console.error('Ошибка обработки изображения:', error);
       alert('Не удалось обработать изображение. Попробуйте другое.');
     } finally {
       setIsLoadingImage(false);

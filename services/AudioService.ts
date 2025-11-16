@@ -34,17 +34,13 @@ class AudioService {
       await this.loadAllSounds();
       
       this.isInitialized = true;
-      console.log("Audio service initialized and sounds loaded");
     } catch (error) {
-      console.error("Error initializing audio service:", error);
     }
   }
 
   // Загрузка всех звуков
   private async loadAllSounds() {
     try {
-      console.log("Starting to load audio files...");
-      
       // Прямая загрузка звуков через require
       const soundDefinitions = [
         { 
@@ -75,7 +71,6 @@ class AudioService {
 
       for (const { type, source } of soundDefinitions) {
         try {
-          console.log(`Loading sound: ${type}`);
           const { sound } = await Audio.Sound.createAsync(
             source,
             {
@@ -88,15 +83,10 @@ class AudioService {
           );
 
           this.sounds.set(type, sound);
-          console.log(`✅ Sound loaded successfully: ${type}`);
         } catch (error) {
-          console.error(`❌ Error loading sound ${type}:`, error);
         }
       }
-      
-      console.log("Finished loading audio files");
     } catch (error) {
-      console.error("Error in loadAllSounds:", error);
     }
   }
 
@@ -104,7 +94,6 @@ class AudioService {
   async playSound(type: SoundType): Promise<void> {
     try {
       if (!this.isInitialized) {
-        console.warn("Audio service not initialized");
         return;
       }
 
@@ -117,10 +106,8 @@ class AudioService {
         }
         await sound.playAsync();
       } else {
-        console.warn(`Sound not found: ${type}`);
       }
     } catch (error) {
-      console.error(`Error playing sound ${type}:`, error);
     }
   }
 
@@ -131,10 +118,8 @@ class AudioService {
       if (sound && !this.isBackgroundMusicPlaying) {
         await sound.playAsync();
         this.isBackgroundMusicPlaying = true;
-        console.log("Background music started");
       }
     } catch (error) {
-      console.error("Error playing background music:", error);
     }
   }
 
@@ -145,10 +130,8 @@ class AudioService {
         await sound.stopAsync();
         await sound.setPositionAsync(0);
         this.isBackgroundMusicPlaying = false;
-        console.log("Background music stopped");
       }
     } catch (error) {
-      console.error("Error stopping background music:", error);
     }
   }
 
@@ -185,7 +168,6 @@ class AudioService {
       this.isBackgroundMusicPlaying = false;
       this.isInitialized = false;
     } catch (error) {
-      console.error("Error unloading sounds:", error);
     }
   }
 }

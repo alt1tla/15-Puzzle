@@ -83,7 +83,7 @@ const HomeScreen = ({ navigation }: Props) => {
             style={styles.Buttons.secondary}
             onPress={handleLeaderboard}
           >
-            <Text style={styles.Typography.button}>Рейтинг (скоро)</Text>
+            <Text style={styles.Typography.button}>Рейтинг</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

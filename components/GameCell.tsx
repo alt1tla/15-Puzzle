@@ -19,7 +19,6 @@ const GameCell: React.FC<GameCellProps> = ({ value, index, cellSize, onPress, im
   const isImageMode = gameMode === 'image';
   const shouldShowImage = isImageMode && imageUri && !isEmpty;
 
-  console.log(`GameCell ${index}: value=${value}, shouldShowImage=${shouldShowImage}`);
 
 
   return (
@@ -48,8 +47,6 @@ const GameCell: React.FC<GameCellProps> = ({ value, index, cellSize, onPress, im
               borderRadius: 8
             }}
             resizeMode="cover"
-            onError={(error) => console.log('❌ Ошибка загрузки изображения:', error.nativeEvent.error)}
-            onLoad={() => console.log('✅ Изображение загружено для клетки', index)}
           />
         ) : (
           <Text style={styles.GameStyles.cellText}>{value}</Text>

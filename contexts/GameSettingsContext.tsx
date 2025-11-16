@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { StorageService, AppSettings } from '../services/StorageService';
 import { ImageService } from '../services/ImageService';
+import { leaderboardService } from '../services/LeaderboardService';
+import { useDeviceId } from '../hooks/useDeviceId';
 
 // Тип для настроек размера поля
 export type BoardSizeSettings = {
@@ -150,6 +152,7 @@ const getBoardSizeWithTimeLimit = (boardSize: any): BoardSizeSettings => {
 
 // Провайдер контекста
 export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
+  const deviceId = useDeviceId();
   const [boardSize, setBoardSize] = useState<BoardSizeSettings>(defaultSettings.boardSize);
   const [theme, setTheme] = useState<Theme>(defaultSettings.theme);
   const [playerName, setPlayerName] = useState<string>(defaultSettings.playerName);
@@ -165,32 +168,55 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
     return 0; // Для classic и timed лимита нет
   };
 
-  // Добавление результата в рейтинг
-  const addScore = (record: Omit<ScoreRecord, 'date' | 'playerName'>) => {
-    const newScore: ScoreRecord = {
-      ...record,
-      playerName,
-      date: new Date().toISOString(),
-    };
-
-    setScores(prevScores => {
-      const updatedScores = [...prevScores, newScore]
-        .sort((a, b) => {
-          if (a.mode !== 'classic' && b.mode !== 'classic') {
-            return a.score - b.score;
-          }
-          return a.score - b.score;
-        })
-        .slice(0, 50);
-      return updatedScores;
-    });
+// Обновляем функцию addScore
+const addScore = async (record: Omit<ScoreRecord, 'date' | 'playerName'>) => {
+  const newScore: ScoreRecord = {
+    ...record,
+    playerName,
+    date: new Date().toISOString(),
   };
+
+  // Сохраняем локально
+  setScores(prevScores => {
+    const updatedScores = [...prevScores, newScore]
+      .sort((a, b) => {
+        if (a.mode !== 'classic' && b.mode !== 'classic') {
+          return a.score - b.score;
+        }
+        return a.score - b.score;
+      })
+      .slice(0, 50);
+    return updatedScores;
+  });
+
+  // Отправляем на сервер (только для classic и timed режимов)
+  if (record.mode === 'classic' || record.mode === 'timed') {
+    try {
+      // ПРАВИЛЬНОЕ преобразование данных для бэкенда
+      const backendScore = {
+        device_id: deviceId,
+        player_name: playerName,
+        time_seconds: record.mode === 'classic' ? record.moves || 0 : record.score, // для classic используем moves как time_seconds
+        moves: record.moves || 0,
+        board_size: parseInt(record.boardSize.charAt(0)), // "3x3" -> 3 (берем первый символ)
+        game_mode: record.mode as 'classic' | 'timed',
+      };
+
+      console.log('Sending score to backend:', backendScore);
+      
+      const result = await leaderboardService.addScore(backendScore);
+      console.log('Score successfully saved to backend:', result);
+      
+    } catch (error) {
+      console.error('Failed to send score to backend:', error);
+      // Можно показать уведомление пользователю
+    }
+  }
+};
 
   const updateImageForCurrentBoardSize = async (): Promise<void> => {
     if (imagePuzzleData && imagePuzzleData.originalUri) {
       try {
-        console.log(`Обновляем изображение для размера ${boardSize.rows}x${boardSize.columns}`);
-
         const pieces = await ImageService.quickSliceImage(
           imagePuzzleData.originalUri,
           boardSize.rows,
@@ -203,14 +229,11 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
             pieces,
             currentBoardSize: boardSize.label
           });
-          console.log(`Изображение успешно обновлено для ${boardSize.label}`);
         } else {
-          console.error('Не удалось обновить изображение');
           // Если не удалось обновить, очищаем данные изображения
           setImagePuzzleData(null);
         }
       } catch (error) {
-        console.error('Ошибка обновления изображения:', error);
         setImagePuzzleData(null);
       }
     }
@@ -246,7 +269,6 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
       };
       await StorageService.saveSettings(currentSettings);
     } catch (error) {
-      console.error('Ошибка сохранения настроек:', error);
     }
   };
 
@@ -272,7 +294,6 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
         setImagePuzzleData(savedSettings.imagePuzzleData || null);
       }
     } catch (error) {
-      console.error('Ошибка загрузки настроек:', error);
     }
   };
 

@@ -44,9 +44,7 @@ export const StorageService = {
         StorageService.STORAGE_KEYS.SETTINGS,
         JSON.stringify(settings)
       );
-      console.log("Настройки успешно сохранены");
     } catch (error) {
-      console.error("Ошибка сохранения настроек:", error);
       throw error;
     }
   },
@@ -58,7 +56,6 @@ export const StorageService = {
       );
       if (settingsJson) {
         const settings = JSON.parse(settingsJson);
-        console.log("Настройки успешно загружены");
 
         // Обеспечиваем обратную совместимость
         const boardSize = settings.boardSize || settings.difficulty || { // Поддержка старых настроек
@@ -81,10 +78,8 @@ export const StorageService = {
           imagePuzzleData: settings.imagePuzzleData || null,
         };
       }
-      console.log("Настройки не найдены, используются значения по умолчанию");
       return null;
     } catch (error) {
-      console.error("Ошибка загрузки настроек:", error);
       return null;
     }
   },
@@ -92,9 +87,7 @@ export const StorageService = {
   clearStorage: async (): Promise<void> => {
     try {
       await AsyncStorage.clear();
-      console.log("Хранилище очищено");
     } catch (error) {
-      console.error("Ошибка очистки хранилища:", error);
       throw error;
     }
   },
