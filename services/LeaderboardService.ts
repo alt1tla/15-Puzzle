@@ -1,3 +1,4 @@
+import { SetStateAction } from "react";
 import { Platform } from "react-native";
 
 export interface LeaderboardEntry {
@@ -22,21 +23,19 @@ export interface AddScoreRequest {
 
 class LeaderboardService {
   private getApiBaseUrl(): string {
-    console.log('Platform.OS:', Platform.OS);
     // Для Android в Expo Go
     if (Platform.OS === "android") {
       return "http://10.0.2.2:8000";
     }
     // Для iOS в Expo Go и других случаев
     // return "http://192.168.1.8:8000";
-    return "http://172.20.10.6:8000";
+    // return "http://172.20.10.6:8000";
+    return "http://192.168.68.108:8000";
   }
 
   private async realFetch(endpoint: string, options: RequestInit = {}) {
     const baseUrl = this.getApiBaseUrl(); 
     const url = `${baseUrl}${endpoint}`;
-    console.log(`📡 Making request to: ${url}`);
-
     try {
       const response = await fetch(url, {
         ...options,
@@ -46,19 +45,17 @@ class LeaderboardService {
         },
       });
 
-      console.log(`📨 Response status: ${response.status}`);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`❌ HTTP error! body: ${errorText}`);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log(`✅ Request successful`);
+
       return result;
     } catch (error) {
-      console.error("❌ Network error:", error);
+
       throw error;
     }
   }
@@ -73,51 +70,18 @@ class LeaderboardService {
   async getLeaderboard(
     boardSize: number,
     gameMode: "classic" | "timed",
-    limit: number = 50
-  ): Promise<{ entries: LeaderboardEntry[]; total_count: number }> {
+    limit: number = 50, 
+    deviceId: string,
+  ): Promise<{
+    user_entry: SetStateAction<LeaderboardEntry | null>;
+    user_position: any;entries: LeaderboardEntry[]; total_count: number, 
+}> {
     try {
       return await this.realFetch(
-        `/leaderboard/?board_size=${boardSize}&game_mode=${gameMode}&limit=${limit}`
+        `/leaderboard/?board_size=${boardSize}&game_mode=${gameMode}&limit=${limit}&device_id=${deviceId}`
       );
     } catch (error) {
-      console.error("Error fetching leaderboard:", error);
-      throw error;
-    }
-  }
-
-  async getTopPlayers(
-    boardSize: number,
-    gameMode: "classic" | "timed",
-    topN: number = 10
-  ): Promise<LeaderboardEntry[]> {
-    try {
-      const response = await this.getLeaderboard(boardSize, gameMode, topN);
-      return response.entries;
-    } catch (error) {
-      console.error("Error fetching top players:", error);
-      throw error;
-    }
-  }
-
-  async getPlayerStats(deviceId: string): Promise<any> {
-    try {
-      return await this.realFetch(`/stats/${deviceId}`);
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-      throw error;
-    }
-  }
-
-  // Тестовая функция для проверки соединения
-  async testConnection(): Promise<boolean> {
-    try {
-      console.log('🔍 Testing backend connection...');
-      const result = await this.realFetch('/');
-      console.log('✅ Backend connection test passed');
-      return true;
-    } catch (error) {
-      console.error('❌ Backend connection test failed');
-      return false;
+     throw error;
     }
   }
 }

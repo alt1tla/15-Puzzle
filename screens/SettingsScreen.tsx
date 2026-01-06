@@ -1,6 +1,6 @@
 // screens/SettingsScreen.tsx
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StatusBar, Platform, Switch } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StatusBar, Platform, Switch, TextInput, Alert } from 'react-native';
 import { useGameSettings, boardSizes } from '../contexts/GameSettingsContext';
 import { useAudioSettings } from '../contexts/AudioSettingsContext';
 import { createStyles } from '../styles/GlobalStyles';
@@ -12,9 +12,50 @@ type Props = {
 };
 
 const SettingsScreen = ({ navigation }: Props) => {
-  const { boardSize, setBoardSize, theme, setTheme, playerName, } = useGameSettings();
+  const { boardSize, setBoardSize, theme, setTheme, playerName, setPlayerName } = useGameSettings();
   const styles = createStyles(theme);
   const { playButtonSound } = useGameSounds();
+
+  // Состояние для режима редактирования
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempPlayerName, setTempPlayerName] = useState(playerName);
+
+  // Обработчик сохранения имени
+  const handleSaveName = async () => {
+    await playButtonSound();
+    VibrationService.playButtonPressVibration();
+
+    const trimmedName = tempPlayerName.trim();
+
+    if (!trimmedName) {
+      Alert.alert(
+        'Ошибка',
+        'Имя не может быть пустым',
+        [{ text: 'OK', onPress: () => setTempPlayerName(playerName) }]
+      );
+      return;
+    }
+
+    if (trimmedName.length > 20) {
+      Alert.alert(
+        'Ошибка',
+        'Имя не может быть длиннее 20 символов',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    // Сохраняем новое имя
+    setPlayerName(trimmedName);
+    setIsEditingName(false);
+
+    // Показываем уведомление об успешном сохранении
+    Alert.alert(
+      'Сохранено',
+      `Имя изменено на "${trimmedName}"`,
+      [{ text: 'OK' }]
+    );
+  };
 
   // Добавляем настройки аудио
   const {
@@ -61,7 +102,13 @@ const SettingsScreen = ({ navigation }: Props) => {
   // Обработчик сохранения и возврата
   const handleSave = async () => {
     await playButtonSound();
-    VibrationService.playButtonPressVibration()
+    VibrationService.playButtonPressVibration();
+
+    // Если режим редактирования активен, сохраняем имя перед выходом
+    if (isEditingName && tempPlayerName.trim()) {
+      setPlayerName(tempPlayerName.trim());
+    }
+
     navigation.goBack();
   };
 
@@ -117,6 +164,124 @@ const SettingsScreen = ({ navigation }: Props) => {
       >
 
         <Text style={[styles.Typography.title, { marginBottom: 40 }]}>Настройки</Text>
+
+        {/* Секция редактирования имени */}
+        <Text style={[styles.Typography.subtitle, { marginBottom: 10 }]}>Имя игрока</Text>
+
+        <View style={[
+          styles.Containers.card,
+          { marginBottom: 30 }
+        ]}>
+          {isEditingName ? (
+            // Режим редактирования
+            <View>
+              <TextInput
+                style={[
+                  styles.Typography.body,
+                  {
+                    padding: 12,
+                    backgroundColor: styles.Colors.surface,
+                    borderRadius: 10,
+                    borderWidth: 2,
+                    borderColor: styles.Colors.primary,
+                    color: styles.Colors.textPrimary,
+                    marginBottom: 15,
+                    fontSize: 16,
+                  }
+                ]}
+                value={tempPlayerName}
+                onChangeText={setTempPlayerName}
+                placeholder="Введите ваше имя"
+                placeholderTextColor={styles.Colors.secondary}
+                autoFocus
+                maxLength={20}
+                onSubmitEditing={() => handleSaveName()}
+              />
+
+              <View style={{
+                flexDirection: 'row',
+                gap: 10,
+                justifyContent: 'flex-end'
+              }}>
+                <TouchableOpacity
+                  style={{
+                    paddingHorizontal: 20,
+                    paddingVertical: 10,
+                    borderRadius: 10,
+                    backgroundColor: styles.Colors.accent,
+                  }}
+                  onPress={() => {
+                    setIsEditingName(false);
+                    setTempPlayerName(playerName); // Сброс к исходному имени
+                    VibrationService.playButtonPressVibration();
+                  }}
+                >
+                  <Text style={[
+                    styles.Typography.button,
+                    { color: styles.Colors.textLight }
+                  ]}>
+                    Отмена
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    paddingHorizontal: 20,
+                    paddingVertical: 10,
+                    borderRadius: 10,
+                    backgroundColor: styles.Colors.primary,
+                  }}
+                  onPress={() => handleSaveName()}
+                >
+                  <Text style={[
+                    styles.Typography.button,
+                    { color: styles.Colors.textLight }
+                  ]}>
+                    Сохранить
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            // Режим просмотра
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingVertical: 10,
+              }}
+              onPress={() => {
+                setIsEditingName(true);
+                VibrationService.playButtonPressVibration();
+              }}
+            >
+              <View>
+                <Text style={[styles.Typography.body, { fontWeight: 'bold' }]}>
+                  {playerName || 'Не задано'}
+                </Text>
+                <Text style={[
+                  styles.Typography.caption,
+                  { marginTop: 4, color: styles.Colors.secondary }
+                ]}>
+                  Нажмите для изменения
+                </Text>
+              </View>
+
+              <View style={{
+                padding: 8,
+                backgroundColor: styles.Colors.primary + '20',
+                borderRadius: 8,
+              }}>
+                <Text style={{ color: styles.Colors.primary }}>✏️</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <Text style={[styles.Typography.subtitle, { marginBottom: 10 }]}>
+          Размер поля
+        </Text>
 
         <Text style={[styles.Typography.subtitle, { marginBottom: 10 }]}>Тема</Text>
 

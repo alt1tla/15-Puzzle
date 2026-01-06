@@ -115,15 +115,6 @@ export const gameModes = [
   },
 ];
 
-// Настройки по умолчанию
-const defaultSettings: AppSettings = {
-  boardSize: boardSizes[1], // 4x4 по умолчанию
-  theme: 'light',
-  playerName: 'Игрок',
-  gameMode: 'classic',
-  scores: [],
-};
-
 // Создаем контекст
 const GameSettingsContext = createContext<GameSettingsContextType | undefined>(undefined);
 
@@ -146,16 +137,29 @@ const getBoardSizeWithTimeLimit = (boardSize: any): BoardSizeSettings => {
   // Если не нашли, создаем с timeLimit по умолчанию
   return {
     ...boardSize,
-    timeLimit: defaultSettings.boardSize.timeLimit
+    timeLimit: 30
   };
 };
 
 // Провайдер контекста
 export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
   const deviceId = useDeviceId();
+  const [defaultSettings] = useState<AppSettings>(() => ({
+    boardSize: boardSizes[0],
+    theme: 'light',
+    playerName: `Игрок`, // Последние 4 символа ID
+    gameMode: 'classic',
+    scores: [],
+  }));
+  const [playerName, setPlayerName] = useState<string>(defaultSettings.playerName);
+  useEffect(() => {
+    if (deviceId && deviceId.length > 0 && playerName === 'Игрок') {
+      const uniqueName = `Игрок${deviceId.slice(-10)}`;
+      setPlayerName(uniqueName);
+    }
+  }, [deviceId, playerName]);
   const [boardSize, setBoardSize] = useState<BoardSizeSettings>(defaultSettings.boardSize);
   const [theme, setTheme] = useState<Theme>(defaultSettings.theme);
-  const [playerName, setPlayerName] = useState<string>(defaultSettings.playerName);
   const [gameMode, setGameMode] = useState<GameMode>(defaultSettings.gameMode);
   const [scores, setScores] = useState<ScoreRecord[]>(defaultSettings.scores);
   const [imagePuzzleData, setImagePuzzleData] = useState<ImagePuzzleData | null>(null);
@@ -168,51 +172,47 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
     return 0; // Для classic и timed лимита нет
   };
 
-// Обновляем функцию addScore
-const addScore = async (record: Omit<ScoreRecord, 'date' | 'playerName'>) => {
-  const newScore: ScoreRecord = {
-    ...record,
-    playerName,
-    date: new Date().toISOString(),
-  };
+  // Обновляем функцию addScore
+  const addScore = async (record: Omit<ScoreRecord, 'date' | 'playerName'>) => {
+    const newScore: ScoreRecord = {
+      ...record,
+      playerName,
+      date: new Date().toISOString(),
+    };
 
-  // Сохраняем локально
-  setScores(prevScores => {
-    const updatedScores = [...prevScores, newScore]
-      .sort((a, b) => {
-        if (a.mode !== 'classic' && b.mode !== 'classic') {
+    // Сохраняем локально
+    setScores(prevScores => {
+      const updatedScores = [...prevScores, newScore]
+        .sort((a, b) => {
+          if (a.mode !== 'classic' && b.mode !== 'classic') {
+            return a.score - b.score;
+          }
           return a.score - b.score;
-        }
-        return a.score - b.score;
-      })
-      .slice(0, 50);
-    return updatedScores;
-  });
+        })
+        .slice(0, 50);
+      return updatedScores;
+    });
 
-  // Отправляем на сервер (только для classic и timed режимов)
-  if (record.mode === 'classic' || record.mode === 'timed') {
-    try {
-      // ПРАВИЛЬНОЕ преобразование данных для бэкенда
-      const backendScore = {
-        device_id: deviceId,
-        player_name: playerName,
-        time_seconds: record.mode === 'classic' ? record.moves || 0 : record.score, // для classic используем moves как time_seconds
-        moves: record.moves || 0,
-        board_size: parseInt(record.boardSize.charAt(0)), // "3x3" -> 3 (берем первый символ)
-        game_mode: record.mode as 'classic' | 'timed',
-      };
+    // Отправляем на сервер (только для classic и timed режимов)
+    if (record.mode === 'classic' || record.mode === 'timed') {
+      try {
+        const backendScore = {
+          device_id: deviceId,
+          player_name: playerName,
+          time_seconds: record.mode === 'classic' ? record.moves || 0 : record.score, // для classic используем moves как time_seconds
+          moves: record.moves || 0,
+          board_size: parseInt(record.boardSize.charAt(0)), // "3x3" -> 3 (берем первый символ)
+          game_mode: record.mode as 'classic' | 'timed',
+        };
 
-      console.log('Sending score to backend:', backendScore);
-      
-      const result = await leaderboardService.addScore(backendScore);
-      console.log('Score successfully saved to backend:', result);
-      
-    } catch (error) {
-      console.error('Failed to send score to backend:', error);
-      // Можно показать уведомление пользователю
+
+        const result = await leaderboardService.addScore(backendScore);
+
+      } catch (error) {
+
+      }
     }
-  }
-};
+  };
 
   const updateImageForCurrentBoardSize = async (): Promise<void> => {
     if (imagePuzzleData && imagePuzzleData.originalUri) {
