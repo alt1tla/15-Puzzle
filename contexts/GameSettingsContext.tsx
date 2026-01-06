@@ -82,7 +82,7 @@ export const boardSizes: BoardSizeSettings[] = [
     timeLimit: 900 // 15 минут
   },
   {
-    label: 'Тест',
+    label: '3x3',
     tails: 8,
     rows: 3,
     columns: 3,

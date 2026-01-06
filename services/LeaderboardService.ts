@@ -28,11 +28,12 @@ class LeaderboardService {
       return "http://10.0.2.2:8000";
     }
     // Для iOS в Expo Go и других случаев
-    return "http://192.168.0.105:8000";
+    // return "http://192.168.1.8:8000";
+    return "http://172.20.10.6:8000";
   }
 
   private async realFetch(endpoint: string, options: RequestInit = {}) {
-    const baseUrl = this.getApiBaseUrl(); // ВЫЗЫВАЕМ функцию!
+    const baseUrl = this.getApiBaseUrl(); 
     const url = `${baseUrl}${endpoint}`;
     console.log(`📡 Making request to: ${url}`);
 
