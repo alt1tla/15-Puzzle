@@ -205,7 +205,6 @@ export const GameSettingsProvider = ({ children }: { children: ReactNode }) => {
           game_mode: record.mode as 'classic' | 'timed',
         };
 
-
         const result = await leaderboardService.addScore(backendScore);
 
       } catch (error) {
