@@ -279,10 +279,6 @@ const SettingsScreen = ({ navigation }: Props) => {
           )}
         </View>
 
-        <Text style={[styles.Typography.subtitle, { marginBottom: 10 }]}>
-          Размер поля
-        </Text>
-
         <Text style={[styles.Typography.subtitle, { marginBottom: 10 }]}>Тема</Text>
 
         <View style={{

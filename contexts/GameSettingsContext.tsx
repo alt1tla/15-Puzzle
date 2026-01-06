@@ -74,21 +74,21 @@ export const boardSizes: BoardSizeSettings[] = [
     columns: 5,
     timeLimit: 600 // 10 минут
   },
-  {
-    label: '6x6',
-    tails: 35,
-    rows: 6,
-    columns: 6,
-    timeLimit: 900 // 15 минут
-  },
-  {
-    label: '3x3',
-    tails: 8,
-    rows: 3,
-    columns: 3,
-    testMode: true,
-    timeLimit: 30 // 30 секунд для тестирования
-  }
+  // {
+  //   label: '6x6',
+  //   tails: 35,
+  //   rows: 6,
+  //   columns: 6,
+  //   timeLimit: 900 // 15 минут
+  // },
+  // {
+  //   label: '3x3',
+  //   tails: 8,
+  //   rows: 3,
+  //   columns: 3,
+  //   testMode: true,
+  //   timeLimit: 30 // 30 секунд для тестирования
+  // }
 ];
 
 // Режимы игры
