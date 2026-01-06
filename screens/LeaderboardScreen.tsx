@@ -42,8 +42,8 @@ const LeaderboardScreen = ({ navigation }: Props) => {
       // Логика определения позиции пользователя
       if (response.user_position !== undefined && response.user_position !== null) {
         setUserPosition(response.user_position);
-        // Если позиция <= 9, пользователь в топ-9
-        if (response.user_position <= 9) {
+        // Если позиция пользователя в топ
+        if (response.user_position <= 5) {
           setIsUserInTop(true);
         } else {
           setIsUserInTop(false);
@@ -364,7 +364,7 @@ const LeaderboardScreen = ({ navigation }: Props) => {
                   </Text>
                   <Text style={styles.Typography.caption}>
                     {selectedGameMode === 'classic'
-                      ? `${entry.moves} ходов`
+                      ? `${entry.moves} ходов • ${formatTime(entry.time_seconds)} `
                       : `${formatTime(entry.time_seconds)} • ${entry.moves} ходов`
                     }
                   </Text>
